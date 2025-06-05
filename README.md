@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfabetização Interativa</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+        }
+        #root {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+        .header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #4CAF50;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .language-selector button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        .language-selector button:hover {
+            background-color: #0056b3;
+        }
+        .language-selector button.active {
+            background-color: #28a745;
+            font-weight: bold;
+        }
+        .navigation-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .navigation-buttons button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .navigation-buttons button:hover {
+            background-color: #5a6268;
+        }
+        .content-display {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+            background-color: #f9f9f9;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .card img {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .card .text-content {
+            font-size: 2.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .card .syllables {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .card .syllable {
+            background-color: #e0f7fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00796b;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .sound-button {
+            background-color: #FFC107;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+        .sound-button:hover {
+            background-color: #e0a800;
+        }
+        .sound-button svg {
+            color: white;
+            font-size: 24px;
+        }
+        .pagination-controls {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+        .pagination-controls button {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: background-color 0.3s ease;
+        }
+        .pagination-controls button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .no-data-message {
+            font-size: 1.5em;
+            color: #666;
+        }
+        .mode-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .mode-buttons button {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .mode-buttons button:hover {
+            background-color: #138496;
+        }
+        .mode-buttons button.active {
+            background-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+        const LucideIcons = {
+            Volume2: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M22.39 2.61a14 14 0 0 1 0 18.78"></path>
+                </svg>
+            ),
+            ChevronLeft: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <path d="m15 18-6-6 6-6"></path>
+                </svg>
+            ),
+            ChevronRight: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <path d="m9 18 6-6-6-6"></path>
+                </svg>
+            ),
+            Paintbrush: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L11.5 17.5l-4 4-4-4 4-4L18.37 2.63z"></path>
+                    <path d="m15 5 4 4"></path>
+                </svg>
+            ),
+            Puzzle: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <path d="M19.4 12.3c-.6-.6-.9-1.4-.8-2.3 0-.6.4-1.1.9-1.4 0-.1.2-.2.3-.3a2.12 2.12 0 0 0-3-3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8-.6-.6-1.4-.9-2.3-.8-.6 0-1.1.4-1.4.9-.1 0-.2.2-.3.3a2.12 2.12 0 0 0-3-3c0-.3.1-.5.2-.7.5-.5.8-1.1.9-1.8 0-.9-.3-1.7-.8-2.3-.6-.6-.9-1.4-.8-2.3 0-.6.4-1.1.9-1.4 0-.1.2-.2.3-.3a2.12 2.12 0 0 0-3-3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8"></path>
+                    <path d="M2.6 12.3c.6-.6.9-1.4.8-2.3 0-.6-.4-1.1-.9-1.4 0-.1-.2-.2-.3-.3a2.12 2.12 0 0 0 3-3c.3 0 .5.1.7.2.5-.5 1.1-.8 1.8-.9.9 0 1.7.3 2.3.8.6-.6 1.4-.9 2.3-.8.6 0 1.1.4 1.4.9.1 0 .2.2.3.3a2.12 2.12 0 0 0 3-3c0-.3-.1-.5-.2-.7-.5-.5-.8-1.1-.9-1.8 0-.9.3-1.7.8-2.3.6-.6.9-1.4.8-2.3 0-.6-.4-1.1-.9-1.4 0-.1-.2-.2-.3-.3a2.12 2.12 0 0 0-3-3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8"></path>
+                    <path d="M12.3 19.4c-.6.6-.9 1.4-.8 2.3 0 .6.4 1.1.9 1.4 0 .1.2.2.3.3a2.12 2.12 0 0 0 3 3c.3 0 .5-.1.7-.2.5.5.8 1.1.9 1.8 0 .9-.3 1.7-.8 2.3-.6.6-.9 1.4-.8 2.3 0 .6.4 1.1.9 1.4 0 .1.2.2.3.3a2.12 2.12 0 0 0-3 3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8"></path>
+                    <path d="M19.4 12.3c-.6.6-.9 1.4-.8 2.3 0 .6.4 1.1.9 1.4 0 .1.2.2.3.3a2.12 2.12 0 0 0-3-3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8-.6-.6-1.4-.9-2.3-.8-.6 0-1.1.4-1.4.9-.1 0-.2.2-.3.3a2.12 2.12 0 0 0-3-3c0-.3.1-.5.2-.7.5-.5.8-1.1.9-1.8 0-.9-.3-1.7-.8-2.3-.6-.6-.9-1.4-.8-2.3 0-.6.4-1.1.9-1.4 0-.1.2-.2.3-.3a2.12 2.12 0 0 0-3-3c-.3 0-.5.1-.7.2-.5-.5-1.1-.8-1.8-.9-.9 0-1.7.3-2.3.8"></path>
+                </svg>
+            ),
+            BookOpen: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+            ),
+            Divide: ({ size = 24, color = 'currentColor', ...props }) => (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    {...props}
+                >
+                    <circle cx="12" cy="6" r="2"></circle>
+                    <line x1="5" x2="19" y1="12" y2="12"></line>
+                    <circle cx="12" cy="18" r="2"></circle>
+                </svg>
+            ),
+        };
+
+        const { Volume2, ChevronLeft, ChevronRight, Paintbrush, Puzzle, BookOpen, Divide } = LucideIcons;
+
+        // Data for words and alphabet (Portuguese and English)
+        const wordsData = {
+          pt: {
+            alphabet: [
+              { letter: 'A', sound: 'A', word: 'Abacaxi', image: 'https://placehold.co/150x150/FFD700/000000?text=Abacaxi', syllables: ['A', 'ba', 'ca', 'xi'] },
+              { letter: 'B', sound: 'Bê', word: 'Bola', image: 'https://placehold.co/150x150/87CEEB/000000?text=Bola', syllables: ['Bo', 'la'] },
+              { letter: 'C', sound: 'Cê', word: 'Casa', image: 'https://placehold.co/150x150/FF6347/000000?text=Casa', syllables: ['Ca', 'sa'] },
+              { letter: 'D', sound: 'Dê', word: 'Dado', image: 'https://placehold.co/150x150/98FB98/000000?text=Dado', syllables: ['Da', 'do'] },
+              { letter: 'E', sound: 'E', word: 'Elefante', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Elefante', syllables: ['E', 'le', 'fan', 'te'] },
+              { letter: 'F', sound: 'Éfe', word: 'Foca', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Foca', syllables: ['Fo', 'ca'] },
+              { letter: 'G', sound: 'Gê', word: 'Gato', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Gato', syllables: ['Ga', 'to'] },
+              { letter: 'H', sound: 'Agá', word: 'Hipopótamo', image: 'https://placehold.co/150x150/F0E68C/000000?text=Hipopótamo', syllables: ['Hi', 'po', 'pó', 'ta', 'mo'] },
+              { letter: 'I', sound: 'I', word: 'Igreja', image: 'https://placehold.co/150x150/AFEEEE/000000?text=Igreja', syllables: ['I', 'gre', 'ja'] },
+              { letter: 'J', sound: 'Jota', word: 'Jacaré', image: 'https://placehold.co/150x150/FFB6C1/000000?text=Jacaré', syllables: ['Ja', 'ca', 'ré'] },
+              { letter: 'K', sound: 'Cá', word: 'Kiwi', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Kiwi', syllables: ['Ki', 'wi'] },
+              { letter: 'L', sound: 'Éle', word: 'Leão', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Leão', syllables: ['Le', 'ão'] },
+              { letter: 'M', sound: 'Ême', word: 'Macaco', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Macaco', syllables: ['Ma', 'ca', 'co'] },
+              { letter: 'N', sound: 'Êne', word: 'Nuvem', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Nuvem', syllables: ['Nu', 'vem'] },
+              { letter: 'O', sound: 'O', word: 'Ovelha', image: 'https://placehold.co/150x150/FFFACD/000000?text=Ovelha', syllables: ['O', 've', 'lha'] },
+              { letter: 'P', sound: 'Pê', word: 'Pato', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Pato', syllables: ['Pa', 'to'] },
+              { letter: 'Q', sound: 'Quê', word: 'Queijo', image: 'https://placehold.co/150x150/F0E68C/000000?text=Queijo', syllables: ['Quei', 'jo'] },
+              { letter: 'R', sound: 'Êrre', word: 'Rato', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Rato', syllables: ['Ra', 'to'] },
+              { letter: 'S', sound: 'Ésse', word: 'Sol', image: 'https://placehold.co/150x150/FFD700/000000?text=Sol', syllables: ['Sol'] },
+              { letter: 'T', sound: 'Tê', word: 'Trem', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Trem', syllables: ['Trem'] },
+              { letter: 'U', sound: 'U', word: 'Uva', image: 'https://placehold.co/150x150/DA70D6/000000?text=Uva', syllables: ['U', 'va'] },
+              { letter: 'V', sound: 'Vê', word: 'Vaca', image: 'https://placehold.co/150x150/98FB98/000000?text=Vaca', syllables: ['Va', 'ca'] },
+              { letter: 'W', sound: 'Dáblio', word: 'Webcam', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Webcam', syllables: ['Web', 'cam'] },
+              { letter: 'X', sound: 'Xis', word: 'Xícara', image: 'https://placehold.co/150x150/FF6347/000000?text=Xícara', syllables: ['Xí', 'ca', 'ra'] },
+              { letter: 'Y', sound: 'Ípsilon', word: 'Yakult', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Yakult', syllables: ['Ya', 'kult'] },
+              { letter: 'Z', sound: 'Zê', word: 'Zebra', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Zebra', syllables: ['Ze', 'bra'] },
+            ],
+            words: [
+              { word: 'Cachorro', image: 'https://placehold.co/150x150/DEB887/000000?text=Cachorro', syllables: ['Ca', 'cho', 'rro'] },
+              { word: 'Flor', image: 'https://placehold.co/150x150/FF69B4/000000?text=Flor', syllables: ['Flor'] },
+              { word: 'Carro', image: 'https://placehold.co/150x150/FF4500/000000?text=Carro', syllables: ['Ca', 'rro'] },
+              { word: 'Árvore', image: 'https://placehold.co/150x150/228B22/000000?text=Árvore', syllables: ['Ár', 'vo', 're'] },
+              { word: 'Sapato', image: 'https://placehold.co/150x150/CD853F/000000?text=Sapato', syllables: ['Sa', 'pa', 'to'] },
+              { word: 'Janela', image: 'https://placehold.co/150x150/87CEEB/000000?text=Janela', syllables: ['Ja', 'ne', 'la'] },
+              { word: 'Livro', image: 'https://placehold.co/150x150/D2B48C/000000?text=Livro', syllables: ['Li', 'vro'] },
+              { word: 'Cadeira', image: 'https://placehold.co/150x150/A0522D/000000?text=Cadeira', syllables: ['Ca', 'dei', 'ra'] },
+              { word: 'Mesa', image: 'https://placehold.co/150x150/F4A460/000000?text=Mesa', syllables: ['Me', 'sa'] },
+              { word: 'Pássaro', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Pássaro', syllables: ['Pás', 'sa', 'ro'] },
+              { word: 'Sol', image: 'https://placehold.co/150x150/FFD700/000000?text=Sol', syllables: ['Sol'] },
+              { word: 'Lua', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Lua', syllables: ['Lu', 'a'] },
+              { word: 'Estrela', image: 'https://placehold.co/150x150/FFFF00/000000?text=Estrela', syllables: ['Es', 'tre', 'la'] },
+              { word: 'Nuvem', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Nuvem', syllables: ['Nu', 'vem'] },
+              { word: 'Chuva', image: 'https://placehold.co/150x150/6495ED/000000?text=Chuva', syllables: ['Chu', 'va'] },
+              { word: 'Vento', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Vento', syllables: ['Ven', 'to'] },
+              { word: 'Fogo', image: 'https://placehold.co/150x150/FF4500/000000?text=Fogo', syllables: ['Fo', 'go'] },
+              { word: 'Água', image: 'https://placehold.co/150x150/4682B4/000000?text=Água', syllables: ['Á', 'gua'] },
+              { word: 'Terra', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Terra', syllables: ['Ter', 'ra'] },
+              { word: 'Montanha', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Montanha', syllables: ['Mon', 'ta', 'nha'] },
+              { word: 'Rio', image: 'https://placehold.co/150x150/00BFFF/000000?text=Rio', syllables: ['Ri', 'o'] },
+              { word: 'Mar', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Mar', syllables: ['Mar'] },
+              { word: 'Praia', image: 'https://placehold.co/150x150/F4A460/000000?text=Praia', syllables: ['Prai', 'a'] },
+              { word: 'Areia', image: 'https://placehold.co/150x150/F0E68C/000000?text=Areia', syllables: ['A', 'rei', 'a'] },
+              { word: 'Peixe', image: 'https://placehold.co/150x150/FF6347/000000?text=Peixe', syllables: ['Pei', 'xe'] },
+              { word: 'Pássaro', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Pássaro', syllables: ['Pás', 'sa', 'ro'] },
+              { word: 'Borboleta', image: 'https://placehold.co/150x150/FFB6C1/000000?text=Borboleta', syllables: ['Bor', 'bo', 'le', 'ta'] },
+              { word: 'Abelha', image: 'https://placehold.co/150x150/FFD700/000000?text=Abelha', syllables: ['A', 'be', 'lha'] },
+              { word: 'Formiga', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Formiga', syllables: ['For', 'mi', 'ga'] },
+              { word: 'Aranha', image: 'https://placehold.co/150x150/696969/FFFFFF?text=Aranha', syllables: ['A', 'ra', 'nha'] },
+              { word: 'Cobra', image: 'https://placehold.co/150x150/32CD32/000000?text=Cobra', syllables: ['Co', 'bra'] },
+              { word: 'Leão', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Leão', syllables: ['Le', 'ão'] },
+              { word: 'Tigre', image: 'https://placehold.co/150x150/FF8C00/000000?text=Tigre', syllables: ['Ti', 'gre'] },
+              { word: 'Elefante', image: 'https://placehold.co/150x150/D3D3D3/000000?text=Elefante', syllables: ['E', 'le', 'fan', 'te'] },
+              { word: 'Girafa', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Girafa', syllables: ['Gi', 'ra', 'fa'] },
+              { word: 'Zebra', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Zebra', syllables: ['Ze', 'bra'] },
+              { word: 'Macaco', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Macaco', syllables: ['Ma', 'ca', 'co'] },
+              { word: 'Urso', image: 'https://placehold.co/150x150/A0522D/000000?text=Urso', syllables: ['Ur', 'so'] },
+              { word: 'Coelho', image: 'https://placehold.co/150x150/F0F8FF/000000?text=Coelho', syllables: ['Co', 'e', 'lho'] },
+              { word: 'Raposa', image: 'https://placehold.co/150x150/CD5C5C/000000?text=Raposa', syllables: ['Ra', 'po', 'sa'] },
+              { word: 'Lobo', image: 'https://placehold.co/150x150/708090/FFFFFF?text=Lobo', syllables: ['Lo', 'bo'] },
+              { word: 'Veado', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Veado', syllables: ['Ve', 'a', 'do'] },
+              { word: 'Coruja', image: 'https://placehold.co/150x150/D2B48C/000000?text=Coruja', syllables: ['Co', 'ru', 'ja'] },
+              { word: 'Águia', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Águia', syllables: ['Á', 'guia'] },
+              { word: 'Pato', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Pato', syllables: ['Pa', 'to'] },
+              { word: 'Galinha', image: 'https://placehold.co/150x150/F0E68C/000000?text=Galinha', syllables: ['Ga', 'li', 'nha'] },
+              { word: 'Galo', image: 'https://placehold.co/150x150/FF6347/000000?text=Galo', syllables: ['Ga', 'lo'] },
+              { word: 'Ovelha', image: 'https://placehold.co/150x150/FFFACD/000000?text=Ovelha', syllables: ['O', 've', 'lha'] },
+              { word: 'Porco', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Porco', syllables: ['Por', 'co'] },
+              { word: 'Cavalo', image: 'https://placehold.co/150x150/CD853F/000000?text=Cavalo', syllables: ['Ca', 'va', 'lo'] },
+              { word: 'Vaca', image: 'https://placehold.co/150x150/98FB98/000000?text=Vaca', syllables: ['Va', 'ca'] },
+              { word: 'Cabra', image: 'https://placehold.co/150x150/D2B48C/000000?text=Cabra', syllables: ['Ca', 'bra'] },
+              { word: 'Gato', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Gato', syllables: ['Ga', 'to'] },
+              { word: 'Cão', image: 'https://placehold.co/150x150/DEB887/000000?text=Cão', syllables: ['Cão'] },
+              { word: 'Boneca', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Boneca', syllables: ['Bo', 'ne', 'ca'] },
+              { word: 'Carro', image: 'https://placehold.co/150x150/FF4500/000000?text=Carro', syllables: ['Ca', 'rro'] },
+              { word: 'Bola', image: 'https://placehold.co/150x150/87CEEB/000000?text=Bola', syllables: ['Bo', 'la'] },
+              { word: 'Bicicleta', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Bicicleta', syllables: ['Bi', 'ci', 'cle', 'ta'] },
+              { word: 'Avião', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Avião', syllables: ['A', 'vi', 'ão'] },
+              { word: 'Trem', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Trem', syllables: ['Trem'] },
+              { word: 'Navio', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Navio', syllables: ['Na', 'vi', 'o'] },
+              { word: 'Barco', image: 'https://placehold.co/150x150/4682B4/000000?text=Barco', syllables: ['Bar', 'co'] },
+              { word: 'Foguete', image: 'https://placehold.co/150x150/8A2BE2/FFFFFF?text=Foguete', syllables: ['Fo', 'gue', 'te'] },
+              { word: 'Casa', image: 'https://placehold.co/150x150/FF6347/000000?text=Casa', syllables: ['Ca', 'sa'] },
+              { word: 'Prédio', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Prédio', syllables: ['Pré', 'dio'] },
+              { word: 'Escola', image: 'https://placehold.co/150x150/98FB98/000000?text=Escola', syllables: ['Es', 'co', 'la'] },
+              { word: 'Hospital', image: 'https://placehold.co/150x150/DC143C/FFFFFF?text=Hospital', syllables: ['Hos', 'pi', 'tal'] },
+              { word: 'Parque', image: 'https://placehold.co/150x150/32CD32/000000?text=Parque', syllables: ['Par', 'que'] },
+              { word: 'Loja', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Loja', syllables: ['Lo', 'ja'] },
+              { word: 'Mercado', image: 'https://placehold.co/150x150/F0E68C/000000?text=Mercado', syllables: ['Mer', 'ca', 'do'] },
+              { word: 'Restaurante', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Restaurante', syllables: ['Res', 'tau', 'ran', 'te'] },
+              { word: 'Cozinha', image: 'https://placehold.co/150x150/FFFACD/000000?text=Cozinha', syllables: ['Co', 'zi', 'nha'] },
+              { word: 'Quarto', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Quarto', syllables: ['Quar', 'to'] },
+              { word: 'Banheiro', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Banheiro', syllables: ['Ba', 'nhei', 'ro'] },
+              { word: 'Sala', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Sala', syllables: ['Sa', 'la'] },
+              { word: 'Jardim', image: 'https://placehold.co/150x150/98FB98/000000?text=Jardim', syllables: ['Jar', 'dim'] },
+              { word: 'Flor', image: 'https://placehold.co/150x150/FF69B4/000000?text=Flor', syllables: ['Flor'] },
+              { word: 'Folha', image: 'https://placehold.co/150x150/228B22/000000?text=Folha', syllables: ['Fo', 'lha'] },
+              { word: 'Árvore', image: 'https://placehold.co/150x150/228B22/000000?text=Árvore', syllables: ['Ár', 'vo', 're'] },
+              { word: 'Fruta', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Fruta', syllables: ['Fru', 'ta'] },
+              { word: 'Maçã', image: 'https://placehold.co/150x150/FF0000/FFFFFF?text=Maçã', syllables: ['Ma', 'çã'] },
+              { word: 'Banana', image: 'https://placehold.co/150x150/FFFF00/000000?text=Banana', syllables: ['Ba', 'na', 'na'] },
+              { word: 'Uva', image: 'https://placehold.co/150x150/800080/FFFFFF?text=Uva', syllables: ['U', 'va'] },
+              { word: 'Laranja', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Laranja', syllables: ['La', 'ran', 'ja'] },
+              { word: 'Morango', image: 'https://placehold.co/150x150/FF0000/FFFFFF?text=Morango', syllables: ['Mo', 'ran', 'go'] },
+              { word: 'Cenoura', image: 'https://placehold.co/150x150/FF8C00/000000?text=Cenoura', syllables: ['Ce', 'nou', 'ra'] },
+              { word: 'Batata', image: 'https://placehold.co/150x150/CD853F/000000?text=Batata', syllables: ['Ba', 'ta', 'ta'] },
+              { word: 'Tomate', image: 'https://placehold.co/150x150/FF6347/000000?text=Tomate', syllables: ['To', 'ma', 'te'] },
+              { word: 'Alface', image: 'https://placehold.co/150x150/32CD32/000000?text=Alface', syllables: ['Al', 'fa', 'ce'] },
+              { word: 'Pão', image: 'https://placehold.co/150x150/D2B48C/000000?text=Pão', syllables: ['Pão'] },
+              { word: 'Queijo', image: 'https://placehold.co/150x150/F0E68C/000000?text=Queijo', syllables: ['Quei', 'jo'] },
+              { word: 'Leite', image: 'https://placehold.co/150x150/F0F8FF/000000?text=Leite', syllables: ['Lei', 'te'] },
+              { word: 'Ovo', image: 'https://placehold.co/150x150/FFFACD/000000?text=Ovo', syllables: ['O', 'vo'] },
+              { word: 'Carne', image: 'https://placehold.co/150x150/CD5C5C/000000?text=Carne', syllables: ['Car', 'ne'] },
+              { word: 'Arroz', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Arroz', syllables: ['Ar', 'roz'] },
+              { word: 'Feijão', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Feijão', syllables: ['Fei', 'jão'] },
+              { word: 'Sopa', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Sopa', syllables: ['So', 'pa'] },
+              { word: 'Bolo', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Bolo', syllables: ['Bo', 'lo'] },
+              { word: 'Doce', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Doce', syllables: ['Do', 'ce'] },
+              { word: 'Chocolate', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Chocolate', syllables: ['Cho', 'co', 'la', 'te'] },
+              { word: 'Sorvete', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Sorvete', syllables: ['Sor', 've', 'te'] },
+              { word: 'Suco', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Suco', syllables: ['Su', 'co'] },
+              { word: 'Água', image: 'https://placehold.co/150x150/4682B4/000000?text=Água', syllables: ['Á', 'gua'] },
+              { word: 'Copo', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Copo', syllables: ['Co', 'po'] },
+              { word: 'Prato', image: 'https://placehold.co/150x150/D3D3D3/000000?text=Prato', syllables: ['Pra', 'to'] },
+              { word: 'Colher', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Colher', syllables: ['Co', 'lher'] },
+              { word: 'Garfo', image: 'https://placehold.co/150x150/708090/FFFFFF?text=Garfo', syllables: ['Gar', 'fo'] },
+              { word: 'Faca', image: 'https://placehold.co/150x150/696969/FFFFFF?text=Faca', syllables: ['Fa', 'ca'] },
+              { word: 'Cama', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Cama', syllables: ['Ca', 'ma'] },
+              { word: 'Travesseiro', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Travesseiro', syllables: ['Tra', 'ves', 'sei', 'ro'] },
+              { word: 'Cobertor', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Cobertor', syllables: ['Co', 'ber', 'tor'] },
+              { word: 'Armário', image: 'https://placehold.co/150x150/CD853F/000000?text=Armário', syllables: ['Ar', 'má', 'rio'] },
+              { word: 'Roupa', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Roupa', syllables: ['Rou', 'pa'] },
+              { word: 'Sapato', image: 'https://placehold.co/150x150/CD853F/000000?text=Sapato', syllables: ['Sa', 'pa', 'to'] },
+              { word: 'Meia', image: 'https://placehold.co/150x150/F0E68C/000000?text=Meia', syllables: ['Mei', 'a'] },
+              { word: 'Chapéu', image: 'https://placehold.co/150x150/D2B48C/000000?text=Chapéu', syllables: ['Cha', 'péu'] },
+              { word: 'Óculos', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Óculos', syllables: ['Ó', 'cu', 'los'] },
+              { word: 'Relógio', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Relógio', syllables: ['Re', 'ló', 'gio'] },
+              { word: 'Telefone', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Telefone', syllables: ['Te', 'le', 'fo', 'ne'] },
+              { word: 'Televisão', image: 'https://placehold.co/150x150/6495ED/000000?text=Televisão', syllables: ['Te', 'le', 'vi', 'são'] },
+              { word: 'Computador', image: 'https://placehold.co/150x150/4682B4/000000?text=Computador', syllables: ['Com', 'pu', 'ta', 'dor'] },
+              { word: 'Rádio', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Rádio', syllables: ['Rá', 'dio'] },
+              { word: 'Livro', image: 'https://placehold.co/150x150/D2B48C/000000?text=Livro', syllables: ['Li', 'vro'] },
+              { word: 'Caderno', image: 'https://placehold.co/150x150/F4A460/000000?text=Caderno', syllables: ['Ca', 'der', 'no'] },
+              { word: 'Lápis', image: 'https://placehold.co/150x150/FF6347/000000?text=Lápis', syllables: ['Lá', 'pis'] },
+              { word: 'Caneta', image: 'https://placehold.co/150x150/98FB98/000000?text=Caneta', syllables: ['Ca', 'ne', 'ta'] },
+              { word: 'Borracha', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Borracha', syllables: ['Bo', 'rra', 'cha'] },
+              { word: 'Mochila', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Mochila', syllables: ['Mo', 'chi', 'la'] },
+              { word: 'Tesoura', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Tesoura', syllables: ['Te', 'sou', 'ra'] },
+              { word: 'Cola', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Cola', syllables: ['Co', 'la'] },
+              { word: 'Tinta', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Tinta', syllables: ['Tin', 'ta'] },
+              { word: 'Pincel', image: 'https://placehold.co/150x150/F0E68C/000000?text=Pincel', syllables: ['Pin', 'cel'] },
+              { word: 'Papel', image: 'https://placehold.co/150x150/FFFACD/000000?text=Papel', syllables: ['Pa', 'pel'] },
+              { word: 'Giz', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Giz', syllables: ['Giz'] },
+              { word: 'Quadro', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Quadro', syllables: ['Qua', 'dro'] },
+              { word: 'Música', image: 'https://placehold.co/150x150/DA70D6/000000?text=Música', syllables: ['Mú', 'si', 'ca'] },
+              { word: 'Dança', image: 'https://placehold.co/150x150/FFB6C1/000000?text=Dança', syllables: ['Dan', 'ça'] },
+              { word: 'Cantar', image: 'https://placehold.co/150x150/FFD700/000000?text=Cantar', syllables: ['Can', 'tar'] },
+              { word: 'Brincar', image: 'https://placehold.co/150x150/87CEEB/000000?text=Brincar', syllables: ['Brin', 'car'] },
+              { word: 'Correr', image: 'https://placehold.co/150x150/98FB98/000000?text=Correr', syllables: ['Cor', 'rer'] },
+              { word: 'Pular', image: 'https://placehold.co/150x150/FF6347/000000?text=Pular', syllables: ['Pu', 'lar'] },
+              { word: 'Andar', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Andar', syllables: ['An', 'dar'] },
+              { word: 'Dormir', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Dormir', syllables: ['Dor', 'mir'] },
+              { word: 'Acordar', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Acordar', syllables: ['A', 'cor', 'dar'] },
+              { word: 'Comer', image: 'https://placehold.co/150x150/F0E68C/000000?text=Comer', syllables: ['Co', 'mer'] },
+              { word: 'Beber', image: 'https://placehold.co/150x150/AFEEEE/000000?text=Beber', syllables: ['Be', 'ber'] },
+              { word: 'Falar', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Falar', syllables: ['Fa', 'lar'] },
+              { word: 'Ouvir', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Ouvir', syllables: ['Ou', 'vir'] },
+              { word: 'Ver', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Ver', syllables: ['Ver'] },
+              { word: 'Cheirar', image: 'https://placehold.co/150x150/FFFACD/000000?text=Cheirar', syllables: ['Chei', 'rar'] },
+              { word: 'Tocar', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Tocar', syllables: ['To', 'car'] },
+              { word: 'Pensar', image: 'https://placehold.co/150x150/F0E68C/000000?text=Pensar', syllables: ['Pen', 'sar'] },
+              { word: 'Aprender', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Aprender', syllables: ['A', 'pren', 'der'] },
+              { word: 'Ensinar', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Ensinar', syllables: ['En', 'si', 'nar'] },
+              { word: 'Ler', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Ler', syllables: ['Ler'] },
+              { word: 'Escrever', image: 'https://placehold.co/150x150/FFFACD/000000?text=Escrever', syllables: ['Es', 'cre', 'ver'] },
+              { word: 'Desenhar', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Desenhar', syllables: ['De', 'se', 'nhar'] },
+              { word: 'Pintar', image: 'https://placehold.co/150x150/F0E68C/000000?text=Pintar', syllables: ['Pin', 'tar'] },
+              { word: 'Cortar', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Cortar', syllables: ['Cor', 'tar'] },
+              { word: 'Colar', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Colar', syllables: ['Co', 'lar'] },
+              { word: 'Abrir', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Abrir', syllables: ['A', 'brir'] },
+              { word: 'Fechar', image: 'https://placehold.co/150x150/FFFACD/000000?text=Fechar', syllables: ['Fe', 'char'] },
+              { word: 'Lavar', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Lavar', syllables: ['La', 'var'] },
+              { word: 'Limpar', image: 'https://placehold.co/150x150/F0E68C/000000?text=Limpar', syllables: ['Lim', 'par'] },
+              { word: 'Ajudar', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Ajudar', syllables: ['A', 'ju', 'dar'] },
+              { word: 'Agradecer', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Agradecer', syllables: ['A', 'gra', 'de', 'cer'] },
+              { word: 'Desculpar', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Desculpar', syllables: ['Des', 'cul', 'par'] },
+              { word: 'Obrigado', image: 'https://placehold.co/150x150/FFFACD/000000?text=Obrigado', syllables: ['O', 'bri', 'ga', 'do'] },
+              { word: 'Por favor', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Por favor', syllables: ['Por', 'fa', 'vor'] },
+              { word: 'Bom dia', image: 'https://placehold.co/150x150/F0E68C/000000?text=Bom dia', syllables: ['Bom', 'di', 'a'] },
+              { word: 'Boa tarde', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Boa tarde', syllables: ['Bo', 'a', 'tar', 'de'] },
+              { word: 'Boa noite', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Boa noite', syllables: ['Bo', 'a', 'noi', 'te'] },
+              { word: 'Até logo', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Até logo', syllables: ['A', 'té', 'lo', 'go'] },
+              { word: 'Sim', image: 'https://placehold.co/150x150/FFFACD/000000?text=Sim', syllables: ['Sim'] },
+              { word: 'Não', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Não', syllables: ['Não'] },
+              { word: 'Amigo', image: 'https://placehold.co/150x150/F0E68C/000000?text=Amigo', syllables: ['A', 'mi', 'go'] },
+              { word: 'Família', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Família', syllables: ['Fa', 'mí', 'lia'] },
+              { word: 'Mãe', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Mãe', syllables: ['Mãe'] },
+              { word: 'Pai', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Pai', syllables: ['Pai'] },
+              { word: 'Irmão', image: 'https://placehold.co/150x150/FFFACD/000000?text=Irmão', syllables: ['Ir', 'mão'] },
+              { word: 'Irmã', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Irmã', syllables: ['Ir', 'mã'] },
+              { word: 'Avô', image: 'https://placehold.co/150x150/F0E68C/000000?text=Avô', syllables: ['A', 'vô'] },
+              { word: 'Avó', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Avó', syllables: ['A', 'vó'] },
+              { word: 'Bebê', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Bebê', syllables: ['Be', 'bê'] },
+              { word: 'Criança', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Criança', syllables: ['Cri', 'an', 'ça'] },
+              { word: 'Menino', image: 'https://placehold.co/150x150/FFFACD/000000?text=Menino', syllables: ['Me', 'ni', 'no'] },
+              { word: 'Menina', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Menina', syllables: ['Me', 'ni', 'na'] },
+              { word: 'Professor', image: 'https://placehold.co/150x150/F0E68C/000000?text=Professor', syllables: ['Pro', 'fes', 'sor'] },
+              { word: 'Alunos', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Alunos', syllables: ['A', 'lu', 'nos'] },
+            ],
+          },
+          en: {
+            alphabet: [
+              { letter: 'A', sound: 'Ayy', word: 'Apple', image: 'https://placehold.co/150x150/FF0000/FFFFFF?text=Apple', syllables: ['Ap', 'ple'] },
+              { letter: 'B', sound: 'Bee', word: 'Ball', image: 'https://placehold.co/150x150/0000FF/FFFFFF?text=Ball', syllables: ['Ball'] },
+              { letter: 'C', sound: 'See', word: 'Cat', image: 'https://placehold.co/150x150/800080/FFFFFF?text=Cat', syllables: ['Cat'] },
+              { letter: 'D', sound: 'Dee', word: 'Dog', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Dog', syllables: ['Dog'] },
+              { letter: 'E', sound: 'Eee', word: 'Elephant', image: 'https://placehold.co/150x150/008000/FFFFFF?text=Elephant', syllables: ['El', 'e', 'phant'] },
+              { letter: 'F', sound: 'Eff', word: 'Fish', image: 'https://placehold.co/150x150/FFFF00/000000?text=Fish', syllables: ['Fish'] },
+              { letter: 'G', sound: 'Gee', word: 'Grape', image: 'https://placehold.co/150x150/800080/FFFFFF?text=Grape', syllables: ['Grape'] },
+              { letter: 'H', sound: 'Aitch', word: 'Hat', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Hat', syllables: ['Hat'] },
+              { letter: 'I', sound: 'Eye', word: 'Ice', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Ice', syllables: ['Ice'] },
+              { letter: 'J', sound: 'Jay', word: 'Jellyfish', image: 'https://placehold.co/150x150/F0E68C/000000?text=Jellyfish', syllables: ['Jel', 'ly', 'fish'] },
+              { letter: 'K', sound: 'Kay', word: 'Kite', image: 'https://placehold.co/150x150/AFEEEE/000000?text=Kite', syllables: ['Kite'] },
+              { letter: 'L', sound: 'Ell', word: 'Lion', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Lion', syllables: ['Li', 'on'] },
+              { letter: 'M', sound: 'Em', word: 'Monkey', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Monkey', syllables: ['Mon', 'key'] },
+              { letter: 'N', sound: 'En', word: 'Nest', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Nest', syllables: ['Nest'] },
+              { letter: 'O', sound: 'Oh', word: 'Orange', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Orange', syllables: ['Or', 'ange'] },
+              { letter: 'P', sound: 'Pee', word: 'Pig', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Pig', syllables: ['Pig'] },
+              { letter: 'Q', sound: 'Cue', word: 'Queen', image: 'https://placehold.co/150x150/F0E68C/000000?text=Queen', syllables: ['Queen'] },
+              { letter: 'R', sound: 'Arr', word: 'Rabbit', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Rabbit', syllables: ['Rab', 'bit'] },
+              { letter: 'S', sound: 'Ess', word: 'Sun', image: 'https://placehold.co/150x150/FFD700/000000?text=Sun', syllables: ['Sun'] },
+              { letter: 'T', sound: 'Tee', word: 'Tree', image: 'https://placehold.co/150x150/228B22/000000?text=Tree', syllables: ['Tree'] },
+              { letter: 'U', sound: 'Yoo', word: 'Umbrella', image: 'https://placehold.co/150x150/DA70D6/000000?text=Umbrella', syllables: ['Um', 'brel', 'la'] },
+              { letter: 'V', sound: 'Vee', word: 'Van', image: 'https://placehold.co/150x150/98FB98/000000?text=Van', syllables: ['Van'] },
+              { letter: 'W', sound: 'Double-yoo', word: 'Water', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Water', syllables: ['Wa', 'ter'] },
+              { letter: 'X', sound: 'Ex', word: 'Xylophone', image: 'https://placehold.co/150x150/FF6347/000000?text=Xylophone', syllables: ['Xyl', 'o', 'phone'] },
+              { letter: 'Y', sound: 'Why', word: 'Yacht', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Yacht', syllables: ['Yacht'] },
+              { letter: 'Z', sound: 'Zee', word: 'Zebra', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Zebra', syllables: ['Ze', 'bra'] },
+            ],
+            words: [
+              { word: 'Cat', image: 'https://placehold.co/150x150/800080/FFFFFF?text=Cat', syllables: ['Cat'] },
+              { word: 'Dog', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Dog', syllables: ['Dog'] },
+              { word: 'House', image: 'https://placehold.co/150x150/FF6347/000000?text=House', syllables: ['House'] },
+              { word: 'Book', image: 'https://placehold.co/150x150/D2B48C/000000?text=Book', syllables: ['Book'] },
+              { word: 'Chair', image: 'https://placehold.co/150x150/A0522D/000000?text=Chair', syllables: ['Chair'] },
+              { word: 'Table', image: 'https://placehold.co/150x150/F4A460/000000?text=Table', syllables: ['Ta', 'ble'] },
+              { word: 'Bird', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Bird', syllables: ['Bird'] },
+              { word: 'Flower', image: 'https://placehold.co/150x150/FF69B4/000000?text=Flower', syllables: ['Flow', 'er'] },
+              { word: 'Car', image: 'https://placehold.co/150x150/FF4500/000000?text=Car', syllables: ['Car'] },
+              { word: 'Tree', image: 'https://placehold.co/150x150/228B22/000000?text=Tree', syllables: ['Tree'] },
+              { word: 'Sun', image: 'https://placehold.co/150x150/FFD700/000000?text=Sun', syllables: ['Sun'] },
+              { word: 'Moon', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Moon', syllables: ['Moon'] },
+              { word: 'Star', image: 'https://placehold.co/150x150/FFFF00/000000?text=Star', syllables: ['Star'] },
+              { word: 'Cloud', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Cloud', syllables: ['Cloud'] },
+              { word: 'Rain', image: 'https://placehold.co/150x150/6495ED/000000?text=Rain', syllables: ['Rain'] },
+              { word: 'Wind', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Wind', syllables: ['Wind'] },
+              { word: 'Fire', image: 'https://placehold.co/150x150/FF4500/000000?text=Fire', syllables: ['Fire'] },
+              { word: 'Water', image: 'https://placehold.co/150x150/4682B4/000000?text=Water', syllables: ['Wa', 'ter'] },
+              { word: 'Earth', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Earth', syllables: ['Earth'] },
+              { word: 'Mountain', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Mountain', syllables: ['Moun', 'tain'] },
+              { word: 'River', image: 'https://placehold.co/150x150/00BFFF/000000?text=River', syllables: ['Riv', 'er'] },
+              { word: 'Sea', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Sea', syllables: ['Sea'] },
+              { word: 'Beach', image: 'https://placehold.co/150x150/F4A460/000000?text=Beach', syllables: ['Beach'] },
+              { word: 'Sand', image: 'https://placehold.co/150x150/F0E68C/000000?text=Sand', syllables: ['Sand'] },
+              { word: 'Fish', image: 'https://placehold.co/150x150/FF6347/000000?text=Fish', syllables: ['Fish'] },
+              { word: 'Bird', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Bird', syllables: ['Bird'] },
+              { word: 'Butterfly', image: 'https://placehold.co/150x150/FFB6C1/000000?text=Butterfly', syllables: ['But', 'ter', 'fly'] },
+              { word: 'Bee', image: 'https://placehold.co/150x150/FFD700/000000?text=Bee', syllables: ['Bee'] },
+              { word: 'Ant', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Ant', syllables: ['Ant'] },
+              { word: 'Spider', image: 'https://placehold.co/150x150/696969/FFFFFF?text=Spider', syllables: ['Spi', 'der'] },
+              { word: 'Snake', image: 'https://placehold.co/150x150/32CD32/000000?text=Snake', syllables: ['Snake'] },
+              { word: 'Lion', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Lion', syllables: ['Li', 'on'] },
+              { word: 'Tiger', image: 'https://placehold.co/150x150/FF8C00/000000?text=Tiger', syllables: ['Ti', 'ger'] },
+              { word: 'Elephant', image: 'https://placehold.co/150x150/D3D3D3/000000?text=Elephant', syllables: ['El', 'e', 'phant'] },
+              { word: 'Giraffe', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Giraffe', syllables: ['Gi', 'raffe'] },
+              { word: 'Zebra', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Zebra', syllables: ['Ze', 'bra'] },
+              { word: 'Monkey', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Monkey', syllables: ['Mon', 'key'] },
+              { word: 'Bear', image: 'https://placehold.co/150x150/A0522D/000000?text=Bear', syllables: ['Bear'] },
+              { word: 'Rabbit', image: 'https://placehold.co/150x150/F0F8FF/000000?text=Rabbit', syllables: ['Rab', 'bit'] },
+              { word: 'Fox', image: 'https://placehold.co/150x150/CD5C5C/000000?text=Fox', syllables: ['Fox'] },
+              { word: 'Wolf', image: 'https://placehold.co/150x150/708090/FFFFFF?text=Wolf', syllables: ['Wolf'] },
+              { word: 'Deer', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Deer', syllables: ['Deer'] },
+              { word: 'Owl', image: 'https://placehold.co/150x150/D2B48C/000000?text=Owl', syllables: ['Owl'] },
+              { word: 'Eagle', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Eagle', syllables: ['Ea', 'gle'] },
+              { word: 'Duck', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Duck', syllables: ['Duck'] },
+              { word: 'Chicken', image: 'https://placehold.co/150x150/F0E68C/000000?text=Chicken', syllables: ['Chick', 'en'] },
+              { word: 'Rooster', image: 'https://placehold.co/150x150/FF6347/000000?text=Rooster', syllables: ['Roos', 'ter'] },
+              { word: 'Sheep', image: 'https://placehold.co/150x150/FFFACD/000000?text=Sheep', syllables: ['Sheep'] },
+              { word: 'Pig', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Pig', syllables: ['Pig'] },
+              { word: 'Horse', image: 'https://placehold.co/150x150/CD853F/000000?text=Horse', syllables: ['Horse'] },
+              { word: 'Cow', image: 'https://placehold.co/150x150/98FB98/000000?text=Cow', syllables: ['Cow'] },
+              { word: 'Goat', image: 'https://placehold.co/150x150/D2B48C/000000?text=Goat', syllables: ['Goat'] },
+              { word: 'Cat', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Cat', syllables: ['Cat'] },
+              { word: 'Dog', image: 'https://placehold.co/150x150/DEB887/000000?text=Dog', syllables: ['Dog'] },
+              { word: 'Doll', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Doll', syllables: ['Doll'] },
+              { word: 'Car', image: 'https://placehold.co/150x150/FF4500/000000?text=Car', syllables: ['Car'] },
+              { word: 'Ball', image: 'https://placehold.co/150x150/87CEEB/000000?text=Ball', syllables: ['Ball'] },
+              { word: 'Bicycle', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Bicycle', syllables: ['Bi', 'cy', 'cle'] },
+              { word: 'Airplane', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Airplane', syllables: ['Air', 'plane'] },
+              { word: 'Train', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Train', syllables: ['Train'] },
+              { word: 'Ship', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Ship', syllables: ['Ship'] },
+              { word: 'Boat', image: 'https://placehold.co/150x150/4682B4/000000?text=Boat', syllables: ['Boat'] },
+              { word: 'Rocket', image: 'https://placehold.co/150x150/8A2BE2/FFFFFF?text=Rocket', syllables: ['Rock', 'et'] },
+              { word: 'House', image: 'https://placehold.co/150x150/FF6347/000000?text=House', syllables: ['House'] },
+              { word: 'Building', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Building', syllables: ['Build', 'ing'] },
+              { word: 'School', image: 'https://placehold.co/150x150/98FB98/000000?text=School', syllables: ['School'] },
+              { word: 'Hospital', image: 'https://placehold.co/150x150/DC143C/FFFFFF?text=Hospital', syllables: ['Hos', 'pi', 'tal'] },
+              { word: 'Park', image: 'https://placehold.co/150x150/32CD32/000000?text=Park', syllables: ['Park'] },
+              { word: 'Store', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Store', syllables: ['Store'] },
+              { word: 'Market', image: 'https://placehold.co/150x150/F0E68C/000000?text=Market', syllables: ['Mar', 'ket'] },
+              { word: 'Restaurant', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Restaurant', syllables: ['Res', 'tau', 'rant'] },
+              { word: 'Kitchen', image: 'https://placehold.co/150x150/FFFACD/000000?text=Kitchen', syllables: ['Kitch', 'en'] },
+              { word: 'Bedroom', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Bedroom', syllables: ['Bed', 'room'] },
+              { word: 'Bathroom', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Bathroom', syllables: ['Bath', 'room'] },
+              { word: 'Living Room', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Living Room', syllables: ['Liv', 'ing', 'Room'] },
+              { word: 'Garden', image: 'https://placehold.co/150x150/98FB98/000000?text=Garden', syllables: ['Gar', 'den'] },
+              { word: 'Flower', image: 'https://placehold.co/150x150/FF69B4/000000?text=Flower', syllables: ['Flow', 'er'] },
+              { word: 'Leaf', image: 'https://placehold.co/150x150/228B22/000000?text=Leaf', syllables: ['Leaf'] },
+              { word: 'Tree', image: 'https://placehold.co/150x150/228B22/000000?text=Tree', syllables: ['Tree'] },
+              { word: 'Fruit', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Fruit', syllables: ['Fruit'] },
+              { word: 'Apple', image: 'https://placehold.co/150x150/FF0000/FFFFFF?text=Apple', syllables: ['Ap', 'ple'] },
+              { word: 'Banana', image: 'https://placehold.co/150x150/FFFF00/000000?text=Banana', syllables: ['Ba', 'na', 'na'] },
+              { word: 'Grape', image: 'https://placehold.co/150x150/800080/FFFFFF?text=Grape', syllables: ['Grape'] },
+              { word: 'Orange', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Orange', syllables: ['Or', 'ange'] },
+              { word: 'Strawberry', image: 'https://placehold.co/150x150/FF0000/FFFFFF?text=Strawberry', syllables: ['Straw', 'ber', 'ry'] },
+              { word: 'Carrot', image: 'https://placehold.co/150x150/FF8C00/000000?text=Carrot', syllables: ['Car', 'rot'] },
+              { word: 'Potato', image: 'https://placehold.co/150x150/CD853F/000000?text=Potato', syllables: ['Po', 'ta', 'to'] },
+              { word: 'Tomato', image: 'https://placehold.co/150x150/FF6347/000000?text=Tomato', syllables: ['To', 'ma', 'to'] },
+              { word: 'Lettuce', image: 'https://placehold.co/150x150/32CD32/000000?text=Lettuce', syllables: ['Let', 'tuce'] },
+              { word: 'Bread', image: 'https://placehold.co/150x150/D2B48C/000000?text=Bread', syllables: ['Bread'] },
+              { word: 'Cheese', image: 'https://placehold.co/150x150/F0E68C/000000?text=Cheese', syllables: ['Cheese'] },
+              { word: 'Milk', image: 'https://placehold.co/150x150/F0F8FF/000000?text=Milk', syllables: ['Milk'] },
+              { word: 'Egg', image: 'https://placehold.co/150x150/FFFACD/000000?text=Egg', syllables: ['Egg'] },
+              { word: 'Meat', image: 'https://placehold.co/150x150/CD5C5C/000000?text=Meat', syllables: ['Meat'] },
+              { word: 'Rice', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Rice', syllables: ['Rice'] },
+              { word: 'Beans', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Beans', syllables: ['Beans'] },
+              { word: 'Soup', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Soup', syllables: ['Soup'] },
+              { word: 'Cake', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Cake', syllables: ['Cake'] },
+              { word: 'Candy', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Candy', syllables: ['Can', 'dy'] },
+              { word: 'Chocolate', image: 'https://placehold.co/150x150/8B4513/FFFFFF?text=Chocolate', syllables: ['Choc', 'o', 'late'] },
+              { word: 'Ice Cream', image: 'https://placehold.co/150x150/B0E0E6/000000?text=Ice Cream', syllables: ['Ice', 'Cream'] },
+              { word: 'Juice', image: 'https://placehold.co/150x150/FFA500/FFFFFF?text=Juice', syllables: ['Juice'] },
+              { word: 'Water', image: 'https://placehold.co/150x150/4682B4/000000?text=Water', syllables: ['Wa', 'ter'] },
+              { word: 'Cup', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Cup', syllables: ['Cup'] },
+              { word: 'Plate', image: 'https://placehold.co/150x150/D3D3D3/000000?text=Plate', syllables: ['Plate'] },
+              { word: 'Spoon', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Spoon', syllables: ['Spoon'] },
+              { word: 'Fork', image: 'https://placehold.co/150x150/708090/FFFFFF?text=Fork', syllables: ['Fork'] },
+              { word: 'Knife', image: 'https://placehold.co/150x150/696969/FFFFFF?text=Knife', syllables: ['Knife'] },
+              { word: 'Bed', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Bed', syllables: ['Bed'] },
+              { word: 'Pillow', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Pillow', syllables: ['Pil', 'low'] },
+              { word: 'Blanket', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Blanket', syllables: ['Blan', 'ket'] },
+              { word: 'Closet', image: 'https://placehold.co/150x150/CD853F/000000?text=Closet', syllables: ['Clos', 'et'] },
+              { word: 'Clothes', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Clothes', syllables: ['Clothes'] },
+              { word: 'Shoe', image: 'https://placehold.co/150x150/CD853F/000000?text=Shoe', syllables: ['Shoe'] },
+              { word: 'Sock', image: 'https://placehold.co/150x150/F0E68C/000000?text=Sock', syllables: ['Sock'] },
+              { word: 'Hat', image: 'https://placehold.co/150x150/D2B48C/000000?text=Hat', syllables: ['Hat'] },
+              { word: 'Glasses', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Glasses', syllables: ['Glass', 'es'] },
+              { word: 'Watch', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Watch', syllables: ['Watch'] },
+              { word: 'Phone', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Phone', syllables: ['Phone'] },
+              { word: 'Television', image: 'https://placehold.co/150x150/6495ED/000000?text=Television', syllables: ['Tel', 'e', 'vi', 'sion'] },
+              { word: 'Computer', image: 'https://placehold.co/150x150/4682B4/000000?text=Computer', syllables: ['Com', 'pu', 'ter'] },
+              { word: 'Radio', image: 'https://placehold.co/150x150/1E90FF/FFFFFF?text=Radio', syllables: ['Ra', 'dio'] },
+              { word: 'Book', image: 'https://placehold.co/150x150/D2B48C/000000?text=Book', syllables: ['Book'] },
+              { word: 'Notebook', image: 'https://placehold.co/150x150/F4A460/000000?text=Notebook', syllables: ['Note', 'book'] },
+              { word: 'Pencil', image: 'https://placehold.co/150x150/FF6347/000000?text=Pencil', syllables: ['Pen', 'cil'] },
+              { word: 'Pen', image: 'https://placehold.co/150x150/98FB98/000000?text=Pen', syllables: ['Pen'] },
+              { word: 'Eraser', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Eraser', syllables: ['E', 'ra', 'ser'] },
+              { word: 'Backpack', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Backpack', syllables: ['Back', 'pack'] },
+              { word: 'Scissors', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Scissors', syllables: ['Scis', 'sors'] },
+              { word: 'Glue', image: 'https://placehold.co/150x150/E0FFFF/000000?text=Glue', syllables: ['Glue'] },
+              { word: 'Paint', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Paint', syllables: ['Paint'] },
+              { word: 'Brush', image: 'https://placehold.co/150x150/F0E68C/000000?text=Brush', syllables: ['Brush'] },
+              { word: 'Paper', image: 'https://placehold.co/150x150/FFFACD/000000?text=Paper', syllables: ['Pa', 'per'] },
+              { word: 'Chalk', image: 'https://placehold.co/150x150/C0C0C0/000000?text=Chalk', syllables: ['Chalk'] },
+              { word: 'Board', image: 'https://placehold.co/150x150/A9A9A9/000000?text=Board', syllables: ['Board'] },
+              { word: 'Music', image: 'https://placehold.co/150x150/DA70D6/000000?text=Music', syllables: ['Mu', 'sic'] },
+              { word: 'Dance', image: 'https://placehold.co/150x150/FFB6C1/000000?text=Dance', syllables: ['Dance'] },
+              { word: 'Sing', image: 'https://placehold.co/150x150/FFD700/000000?text=Sing', syllables: ['Sing'] },
+              { word: 'Play', image: 'https://placehold.co/150x150/87CEEB/000000?text=Play', syllables: ['Play'] },
+              { word: 'Run', image: 'https://placehold.co/150x150/98FB98/000000?text=Run', syllables: ['Run'] },
+              { word: 'Jump', image: 'https://placehold.co/150x150/FF6347/000000?text=Jump', syllables: ['Jump'] },
+              { word: 'Walk', image: 'https://placehold.co/150x150/ADD8E6/000000?text=Walk', syllables: ['Walk'] },
+              { word: 'Sleep', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Sleep', syllables: ['Sleep'] },
+              { word: 'Wake up', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Wake up', syllables: ['Wake', 'up'] },
+              { word: 'Eat', image: 'https://placehold.co/150x150/F0E68C/000000?text=Eat', syllables: ['Eat'] },
+              { word: 'Drink', image: 'https://placehold.co/150x150/AFEEEE/000000?text=Drink', syllables: ['Drink'] },
+              { word: 'Speak', image: 'https://placehold.co/150x150/F5DEB3/000000?text=Speak', syllables: ['Speak'] },
+              { word: 'Listen', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Listen', syllables: ['Lis', 'ten'] },
+              { word: 'See', image: 'https://placehold.co/150x150/B0C4DE/000000?text=See', syllables: ['See'] },
+              { word: 'Smell', image: 'https://placehold.co/150x150/FFFACD/000000?text=Smell', syllables: ['Smell'] },
+              { word: 'Touch', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Touch', syllables: ['Touch'] },
+              { word: 'Think', image: 'https://placehold.co/150x150/F0E68C/000000?text=Think', syllables: ['Think'] },
+              { word: 'Learn', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Learn', syllables: ['Learn'] },
+              { word: 'Teach', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Teach', syllables: ['Teach'] },
+              { word: 'Read', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Read', syllables: ['Read'] },
+              { word: 'Write', image: 'https://placehold.co/150x150/FFFACD/000000?text=Write', syllables: ['Write'] },
+              { word: 'Draw', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Draw', syllables: ['Draw'] },
+              { word: 'Paint', image: 'https://placehold.co/150x150/F0E68C/000000?text=Paint', syllables: ['Paint'] },
+              { word: 'Cut', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Cut', syllables: ['Cut'] },
+              { word: 'Glue', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Glue', syllables: ['Glue'] },
+              { word: 'Open', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Open', syllables: ['O', 'pen'] },
+              { word: 'Close', image: 'https://placehold.co/150x150/FFFACD/000000?text=Close', syllables: ['Close'] },
+              { word: 'Wash', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Wash', syllables: ['Wash'] },
+              { word: 'Clean', image: 'https://placehold.co/150x150/F0E68C/000000?text=Clean', syllables: ['Clean'] },
+              { word: 'Help', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Help', syllables: ['Help'] },
+              { word: 'Thank you', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Thank you', syllables: ['Thank', 'you'] },
+              { word: 'Sorry', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Sorry', syllables: ['Sor', 'ry'] },
+              { word: 'Please', image: 'https://placehold.co/150x150/FFFACD/000000?text=Please', syllables: ['Please'] },
+              { word: 'Good morning', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Good morning', syllables: ['Good', 'morn', 'ing'] },
+              { word: 'Good afternoon', image: 'https://placehold.co/150x150/F0E68C/000000?text=Good afternoon', syllables: ['Good', 'af', 'ter', 'noon'] },
+              { word: 'Good night', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Good night', syllables: ['Good', 'night'] },
+              { word: 'Goodbye', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Goodbye', syllables: ['Good', 'bye'] },
+              { word: 'Yes', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Yes', syllables: ['Yes'] },
+              { word: 'No', image: 'https://placehold.co/150x150/FFFACD/000000?text=No', syllables: ['No'] },
+              { word: 'Friend', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Friend', syllables: ['Friend'] },
+              { word: 'Family', image: 'https://placehold.co/150x150/F0E68C/000000?text=Family', syllables: ['Fam', 'i', 'ly'] },
+              { word: 'Mother', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Mother', syllables: ['Moth', 'er'] },
+              { word: 'Father', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Father', syllables: ['Fa', 'ther'] },
+              { word: 'Brother', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Brother', syllables: ['Broth', 'er'] },
+              { word: 'Sister', image: 'https://placehold.co/150x150/FFFACD/000000?text=Sister', syllables: ['Sis', 'ter'] },
+              { word: 'Grandfather', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Grandfather', syllables: ['Grand', 'fa', 'ther'] },
+              { word: 'Grandmother', image: 'https://placehold.co/150x150/F0E68C/000000?text=Grandmother', syllables: ['Grand', 'moth', 'er'] },
+              { word: 'Baby', image: 'https://placehold.co/150x150/FFC0CB/000000?text=Baby', syllables: ['Ba', 'by'] },
+              { word: 'Child', image: 'https://placehold.co/150x150/DDA0DD/000000?text=Child', syllables: ['Child'] },
+              { word: 'Boy', image: 'https://placehold.co/150x150/B0C4DE/000000?text=Boy', syllables: ['Boy'] },
+              { word: 'Girl', image: 'https://placehold.co/150x150/FFFACD/000000?text=Girl', syllables: ['Girl'] },
+              { word: 'Teacher', image: 'https://placehold.co/150x150/FFDAB9/000000?text=Teacher', syllables: ['Teach', 'er'] },
+              { word: 'Students', image: 'https://placehold.co/150x150/F0E68C/000000?text=Students', syllables: ['Stu', 'dents'] },
+            ],
+          },
+        };
+
+        const App = () => {
+            const [currentLanguage, setCurrentLanguage] = useState('pt');
+            const [mode, setMode] = useState('alphabet'); // 'alphabet', 'words', 'syllables', 'drawing'
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const synthesisRef = useRef(window.speechSynthesis);
+
+            const dataToDisplay = mode === 'alphabet' ? wordsData[currentLanguage].alphabet : wordsData[currentLanguage].words;
+
+            const speakText = useCallback((text, lang) => {
+                if (synthesisRef.current) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = lang;
+                    synthesisRef.current.speak(utterance);
+                }
+            }, []);
+
+            useEffect(() => {
+                setCurrentIndex(0); // Reset index when language or mode changes
+            }, [currentLanguage, mode]);
+
+            const handlePrev = () => {
+                setCurrentIndex((prevIndex) => (prevIndex === 0 ? dataToDisplay.length - 1 : prevIndex - 1));
+            };
+
+            const handleNext = () => {
+                setCurrentIndex((prevIndex) => (prevIndex === dataToDisplay.length - 1 ? 0 : prevIndex + 1));
+            };
+
+            const currentItem = dataToDisplay[currentIndex];
+
+            const renderContent = () => {
+                if (!currentItem) {
+                    return <p className="no-data-message">Nenhum dado para exibir neste modo/idioma.</p>;
+                }
+
+                return (
+                    <div className="card">
+                        {mode === 'alphabet' && (
+                            <>
+                                <div className="text-content">{currentItem.letter}</div>
+                                <button className="sound-button" onClick={() => speakText(currentItem.sound, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                    <Volume2 size={30} />
+                                </button>
+                                <div className="text-content">{currentItem.word}</div>
+                                <img src={currentItem.image} alt={currentItem.word} />
+                                {currentItem.syllables && (
+                                    <div className="syllables">
+                                        {currentItem.syllables.map((syllable, index) => (
+                                            <span key={index} className="syllable" onClick={() => speakText(syllable, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                                {syllable}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {mode === 'words' && (
+                            <>
+                                <div className="text-content">{currentItem.word}</div>
+                                <img src={currentItem.image} alt={currentItem.word} />
+                                <button className="sound-button" onClick={() => speakText(currentItem.word, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                    <Volume2 size={30} />
+                                </button>
+                                {currentItem.syllables && (
+                                    <div className="syllables">
+                                        {currentItem.syllables.map((syllable, index) => (
+                                            <span key={index} className="syllable" onClick={() => speakText(syllable, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                                {syllable}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {mode === 'syllables' && (
+                            <>
+                                <div className="text-content">{currentItem.word}</div>
+                                <img src={currentItem.image} alt={currentItem.word} />
+                                {currentItem.syllables && (
+                                    <div className="syllables">
+                                        {currentItem.syllables.map((syllable, index) => (
+                                            <span key={index} className="syllable" onClick={() => speakText(syllable, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                                {syllable}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                <button className="sound-button" onClick={() => speakText(currentItem.word, currentLanguage === 'pt' ? 'pt-BR' : 'en-US')}>
+                                    <Volume2 size={30} />
+                                </button>
+                            </>
+                        )}
+                        {mode === 'drawing' && (
+                            <div className="no-data-message">Modo de desenho em desenvolvimento.</div>
+                        )}
+                    </div>
+                );
+            };
+
+            return (
+                <div>
+                    <div className="header">
+                        <h1>Alfabetização Interativa</h1>
+                        <div className="language-selector">
+                            <button className={currentLanguage === 'pt' ? 'active' : ''} onClick={() => setCurrentLanguage('pt')}>Português</button>
+                            <button className={currentLanguage === 'en' ? 'active' : ''} onClick={() => setCurrentLanguage('en')}>English</button>
+                        </div>
+                    </div>
+
+                    <div className="mode-buttons">
+                        <button className={mode === 'alphabet' ? 'active' : ''} onClick={() => setMode('alphabet')}>
+                            <BookOpen size={20} /> Alfabeto
+                        </button>
+                        <button className={mode === 'words' ? 'active' : ''} onClick={() => setMode('words')}>
+                            <Puzzle size={20} /> Palavras
+                        </button>
+                        <button className={mode === 'syllables' ? 'active' : ''} onClick={() => setMode('syllables')}>
+                            <Divide size={20} /> Sílabas
+                        </button>
+                        <button className={mode === 'drawing' ? 'active' : ''} onClick={() => setMode('drawing')}>
+                            <Paintbrush size={20} /> Desenho
+                        </button>
+                    </div>
+
+                    <div className="content-display">
+                        {renderContent()}
+                        <div className="pagination-controls">
+                            <button onClick={handlePrev}><ChevronLeft size={30} /></button>
+                            <button onClick={handleNext}><ChevronRight size={30} /></button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

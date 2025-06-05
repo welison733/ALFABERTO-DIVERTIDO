@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Alfabetização</title>
+    <!-- Inclui o Tailwind CSS para estilos rápidos e responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter para todo o corpo do documento */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #6EE7B7, #34D399, #10B981); /* Gradiente esverdeado mais vibrante */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: auto; /* Permite rolagem se o conteúdo for maior que a tela */
+            padding: 1rem; /* Adiciona um pequeno padding ao redor do corpo */
+        }
+        /* Estilos aprimorados para o contêiner principal do jogo */
+        .game-container {
+            background: rgba(255, 255, 255, 0.95); /* Fundo branco semi-transparente */
+            border-radius: 2.5rem; /* rounded-3xl */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Sombra mais suave e moderna */
+            max-width: 900px; /* Largura máxima maior para melhor visualização */
+            width: 100%;
+            margin: 2rem auto; /* Centraliza e adiciona margem superior/inferior */
+            padding: 3rem; /* Aumenta o padding interno */
+            border: 2px solid #E5E7EB; /* Borda sutil */
+        }
+
+        /* Estilos aprimorados para os botões de navegação primários */
+        .btn-primary {
+            @apply bg-gradient-to-br from-blue-500 to-blue-700 text-white font-extrabold py-3 px-6 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:from-blue-600 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center gap-2 text-xl md:text-2xl;
+        }
+        /* Estilos aprimorados para os botões de ação */
+        .btn-action {
+            @apply bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold py-2 px-5 rounded-xl shadow-md transition-all duration-300 transform hover:scale-105 hover:from-purple-600 hover:to-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 flex items-center justify-center gap-2 text-lg md:text-xl;
+        }
+        /* Estilos para os botões de letras/sílabas (geral) */
+        /* Removido o gradiente de amarelo aqui, a cor será definida via JS */
+        .letter-btn, .syllable-btn, .assemble-syllable-btn {
+            @apply text-gray-800 text-5xl font-bold py-4 px-6 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center; /* Ajustado para um efeito de clique mais suave */
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        /* Classe para feedback visual ao clicar nas letras */
+        .letter-btn.clicked, .syllable-btn.clicked {
+            animation: clickFeedback 0.2s forwards;
+        }
+
+        /* Estilos para o display de palavras/sílabas */
+        .word-display {
+            @apply bg-white p-6 rounded-2xl shadow-inner text-center text-4xl font-extrabold text-gray-800 min-h-[120px] flex flex-col items-center justify-center border-2 border-gray-200;
+            background-color: #F8FAFC; /* Fundo levemente off-white */
+            color: #1F2937; /* Cor de texto mais escura para contraste */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+            letter-spacing: 0.05em; /* Espaçamento entre letras */
+        }
+        /* Ajuste para o display da palavra alvo, para acomodar a bandeira e imagem */
+        .word-display#target-word-display, .word-display#syllable-assembly-target-word {
+            flex-direction: row; /* Alinha o texto e a bandeira/imagem horizontalmente */
+            gap: 0.5rem; /* Espaçamento entre os elementos */
+            font-size: 3rem; /* Tamanho maior para o texto principal */
+        }
+        .word-display #target-word-text, .word-display #read-word-text, .word-display #syllable-word-text, .word-display #assemble-word-text, .word-display #current-word-display {
+            color: #3B82F6; /* Cor azul primária para as palavras em foco */
+        }
+        /* Estilos para feedback */
+        #create-word-feedback, #syllable-assembly-feedback, #math-feedback {
+            @apply mt-6 p-3 rounded-lg font-extrabold text-white text-center;
+        }
+        .text-green-700 { /* Classe para sucesso */
+            background-color: #10B981; /* Tailwind green-600 */
+        }
+        .text-red-700 { /* Classe para erro */
+            background-color: #EF4444; /* Tailwind red-500 */
+        }
+        .text-orange-700 { /* Classe para aviso */
+            background-color: #F97316; /* Tailwind orange-500 */
+        }
+
+        /* Estilos para o canvas de desenho (Draw/Write) */
+        #drawing-canvas {
+            border: 3px solid #CBD5E1; /* Borda mais pronunciada */
+            background-color: #FFFFFF; /* Fundo branco limpo */
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            touch-action: none;
+        }
+        .canvas-tool-btn {
+            @apply bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-base;
+            font-weight: 600; /* Semi-bold */
+        }
+        .canvas-tool-btn span {
+            font-size: 1.5rem; /* Aumenta o tamanho do ícone */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 1.5rem;
+                margin: 1rem auto;
+            }
+            .btn-primary, .btn-action {
+                font-size: 1.125rem; /* text-lg */
+                padding: 0.75rem 1.25rem; /* py-3 px-5 */
+            }
+            .word-display {
+                font-size: 2rem; /* text-3xl */
+                min-height: 90px;
+                padding: 1.25rem;
+            }
+            .letter-btn, .syllable-btn, .assemble-syllable-btn {
+                font-size: 4rem; /* text-4xl */
+                padding: 1rem 1.5rem; /* py-4 px-6 */
+            }
+            .word-display#target-word-display, .word-display#syllable-assembly-target-word {
+                font-size: 2rem; /* Ajuste para telas menores */
+            }
+        }
+
+        /* Keyframes para feedback de clique nas letras */
+        @keyframes clickFeedback {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(0.98); filter: brightness(1.2); } /* Levemente encolhe e clareia */
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        /* Keyframes for other feedback animations */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        .animate-pulse { animation: pulse 1s ease-in-out; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+
+        @keyframes levelUp {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .level-up-animation {
+            animation: levelUp 1s ease-out;
+            color: #FFD700; /* Gold color */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-center text-gray-800 mb-8 leading-tight">
+            Meu Primeiro Jogo de Alfabetização <span class="text-blue-500">🎉</span>
+        </h1>
+
+        <!-- Score and Level Display -->
+        <div class="flex flex-col md:flex-row justify-center gap-4 md:gap-8 mb-6 text-2xl font-bold text-gray-700">
+            <div id="score-display" class="bg-blue-100 p-3 rounded-lg shadow-inner flex items-center gap-2">
+                <span class="text-blue-600">🏆</span> Pontuação: <span class="text-blue-800">0</span>
+            </div>
+            <div id="level-display" class="bg-green-100 p-3 rounded-lg shadow-inner flex items-center gap-2">
+                <span class="text-green-600">🌟</span> Nível: <span class="text-green-800">1</span>
+            </div>
+        </div>
+
+        <!-- Menu de Navegação do Jogo -->
+        <nav class="flex flex-wrap justify-center gap-4 mb-10">
+            <button class="btn-primary" onclick="showSection('create-words')">
+                <span>Criar Palavras</span> <span>✍️</span>
+            </button>
+            <button class="btn-primary" onclick="showSection('syllable-assembly')">
+                <span>Montar Sílabas</span> <span>🧩</span>
+            </button>
+            <button class="btn-primary" onclick="showSection('math-game')">
+                <span>Fazer Contas</span> <span>➕➖✖️➗</span>
+            </button>
+        </nav>
+
+        <!-- Seção: Criar Palavras -->
+        <section id="create-words" class="game-section active transition-opacity duration-500 ease-in-out opacity-0">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-700 mb-6" id="create-words-title">
+                Construa Suas Palavras! <span class="text-yellow-500">✨</span>
+            </h2>
+            <div id="target-word-display" class="word-display mb-4 text-2xl md:text-3xl font-normal text-gray-600 flex items-center justify-center">
+                <!-- O texto da palavra e a bandeira (se houver) serão inseridos aqui pelo JS -->
+                Tente formar:
+            </div>
+            <div id="current-word-display" class="word-display mb-8 w-full flex flex-wrap justify-center items-center gap-2"
+                ondragover="allowDrop(event)" ondrop="drop(event)">
+                <span class="text-gray-500 text-3xl">Arraste as letras para cá!</span>
+            </div>
+
+            <div id="alphabet-grid" class="grid grid-cols-5 md:grid-cols-7 gap-4 mb-8">
+                <!-- As letras serão geradas aqui pelo JavaScript -->
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="btn-action" onclick="clearCurrentWord()">
+                    <span>Apagar</span> <span>❌</span>
+                </button>
+                <button class="btn-action" onclick="pronounceCurrentWord()">
+                    <span>Pronunciar Palavra</span> <span>🔊</span>
+                </button>
+                <button class="btn-action bg-blue-500 hover:bg-blue-600" onclick="checkFormedWord()">
+                    <span>Verificar</span> <span>✅</span>
+                </button>
+                <button class="btn-action bg-orange-500 hover:bg-orange-600" onclick="nextTargetWord(true)">
+                    <span>Próxima Palavra</span> <span>➡️</span>
+                </button>
+            </div>
+            <div id="create-word-feedback" class="text-center text-2xl mt-4 font-bold"></div>
+        </section>
+
+        <!-- Nova Seção: Montar Sílabas -->
+        <section id="syllable-assembly" class="game-section transition-opacity duration-500 ease-in-out opacity-0">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-700 mb-6">
+                Monte as Sílabas! <span class="text-green-500">🧩</span>
+            </h2>
+            <div id="syllable-assembly-target-word" class="word-display mb-4 text-2xl md:text-3xl font-normal text-gray-600">
+                Palavra a ser montada: <span id="syllable-assembly-word-text" class="font-bold text-blue-600"></span>
+            </div>
+            <div id="current-syllable-assembly-display" class="word-display mb-8 w-full flex flex-wrap justify-center items-center gap-2 border-dashed border-4 border-gray-400 p-6"
+                ondragover="allowDropSyllable(event)" ondrop="dropSyllable(event)">
+                <span class="text-gray-500 text-3xl">Arraste as sílabas para cá!</span>
+            </div>
+
+            <div id="syllable-pieces-grid" class="grid grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+                <!-- As sílabas para arrastar serão geradas aqui pelo JavaScript -->
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="btn-action" onclick="clearSyllableAssembly()">
+                    <span>Apagar Tudo</span> <span>🗑️</span>
+                </button>
+                <button class="btn-action" onclick="pronounceAssembledSyllables()">
+                    <span>Pronunciar</span> <span>🔊</span>
+                </button>
+                <button class="btn-action bg-blue-500 hover:bg-blue-600" onclick="checkSyllableAssembly()">
+                    <span>Verificar</span> <span>✅</span>
+                </button>
+                <button class="btn-action bg-orange-500 hover:bg-orange-600" onclick="generateNewSyllableAssemblyProblem(true)">
+                    <span>Próxima Palavra</span> <span>➡️</span>
+                </button>
+            </div>
+            <div id="syllable-assembly-feedback" class="text-center text-2xl mt-4 font-bold"></div>
+        </section>
+
+        <!-- Nova Seção: Fazer Contas (Matemática) -->
+        <section id="math-game" class="game-section transition-opacity duration-500 ease-in-out opacity-0">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-700 mb-6">
+                Vamos Fazer Contas! <span class="text-pink-500">🔢</span>
+            </h2>
+            <div id="math-problem-display" class="word-display mb-6 text-5xl">
+                <!-- O problema de matemática será exibido aqui -->
+            </div>
+            <div class="flex justify-center items-center mb-8 gap-4">
+                <label for="math-answer" class="sr-only">Sua Resposta</label>
+                <input type="number" id="math-answer" class="p-4 text-center text-4xl font-bold rounded-xl shadow-inner border-2 border-gray-300 w-40" placeholder="?" onkeypress="if(event.key === 'Enter') checkMathAnswer()">
+            </div>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="btn-action" onclick="clearMathAnswer()">
+                    <span>Limpar</span> <span>🗑️</span>
+                </button>
+                <button class="btn-action bg-blue-500 hover:bg-blue-600" onclick="checkMathAnswer()">
+                    <span>Verificar</span> <span>✅</span>
+                </button>
+                <button class="btn-action bg-orange-500 hover:bg-orange-600" onclick="generateNewMathProblem(true)">
+                    <span>Próxima Conta</span> <span>➡️</span>
+                </button>
+            </div>
+            <div id="math-feedback" class="text-center text-2xl mt-4 font-bold"></div>
+        </section>
+
+    </div>
+
+    <script>
+        // Inicializa a API de síntese de fala (SpeechSynthesisUtterance)
+        const synth = window.speechSynthesis;
+        let currentVoice = null;
+
+        // Game State (Pontuação, Níveis, Adaptação)
+        let gameState = {
+            score: 0,
+            level: 1,
+            // Track individual section progress for adaptive learning
+            createWords: {
+                currentCategoryIndex: 0, // Índice da categoria atual
+                consecutiveCorrect: 0,
+                consecutiveIncorrect: 0
+            },
+            syllableAssembly: { // Novo estado para o jogo de montagem de sílabas
+                currentIndex: 0,
+                consecutiveCorrect: 0,
+                consecutiveIncorrect: 0
+            },
+            mathGame: { consecutiveCorrect: 0, consecutiveIncorrect: 0 }, // Novo estado para o jogo de matemática
+            currentSectionId: 'create-words' // Default active section
+        };
+
+        // Seleciona uma voz em português do Brasil
+        function setPortugueseVoice() {
+            if (!synth) {
+                console.warn('API de síntese de fala não suportada neste navegador.');
+                return;
+            }
+            synth.onvoiceschanged = () => {
+                const voices = synth.getVoices();
+                currentVoice = voices.find(voice => voice.lang === 'pt-BR');
+                if (!currentVoice) {
+                    console.warn('Voz em português (pt-BR) não encontrada. Usando a voz padrão.');
+                }
+            };
+            if (synth.getVoices().length === 0) {
+                 synth.getVoices();
+            } else {
+                 setPortugueseVoice();
+            }
+        }
+        setPortugueseVoice();
+
+        // Função para pronunciar o texto
+        function speak(text) {
+            if (!synth || !currentVoice) {
+                console.warn('Não é possível pronunciar: API ou voz não disponível.');
+                return;
+            }
+            synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'pt-BR';
+            utterance.voice = currentVoice;
+            utterance.rate = 0.9;
+            synth.speak(utterance);
+        }
+
+        // Display de Pontuação e Nível
+        const scoreDisplay = document.querySelector('#score-display span:last-child');
+        const levelDisplay = document.querySelector('#level-display span:last-child');
+
+        function updateScoreAndLevelDisplay() {
+            scoreDisplay.textContent = gameState.score;
+            levelDisplay.textContent = gameState.level;
+        }
+
+        function checkLevelUp() {
+            // Níveis: 1 (0-49 pts), 2 (50-99 pts), 3 (100-149 pts), etc.
+            const requiredScoreForNextLevel = gameState.level * 50;
+            if (gameState.score >= requiredScoreForNextLevel) {
+                gameState.level++;
+                speak(`Parabéns! Você subiu para o nível ${gameState.level}!`);
+                // Animação para o nível
+                const levelElement = document.getElementById('level-display');
+                levelElement.classList.add('level-up-animation');
+                setTimeout(() => {
+                    levelElement.classList.remove('level-up-animation');
+                }, 1000);
+            }
+        }
+
+        // Função genérica para atualizar as estatísticas do jogo e avançar
+        function updateGameStats(isCorrect, sectionProgress) {
+            if (isCorrect) {
+                gameState.score += 10;
+                sectionProgress.consecutiveCorrect++;
+                sectionProgress.consecutiveIncorrect = 0;
+                // Para jogos que não têm `currentIndex`, apenas avançar a pontuação
+                // e resetar `consecutiveCorrect`/`consecutiveIncorrect`
+            } else {
+                gameState.score = Math.max(0, gameState.score - 5); // Evita pontuação negativa
+                sectionProgress.consecutiveIncorrect++;
+                sectionProgress.consecutiveCorrect = 0;
+            }
+            updateScoreAndLevelDisplay();
+            checkLevelUp();
+        }
+
+        /* --- Lógica da Seção 'Criar Palavras' --- */
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÃÕÇ".split('');
+        const currentWordDisplay = document.getElementById('current-word-display');
+        const alphabetGrid = document.getElementById('alphabet-grid');
+        const targetWordDisplay = document.getElementById('target-word-display'); // Referência ao contêiner completo
+        const createWordFeedback = document.getElementById('create-word-feedback');
+        const createWordsTitle = document.getElementById('create-words-title'); // Novo ID para o título
+        let currentFormedLetters = []; // Novo array para rastrear as letras na palavra atual
+        let currentChosenWord = {}; // Variável global para a palavra a ser formada (agora pode ser um objeto com palavra e bandeira/imagem)
+
+        // Categorias de palavras
+        const wordCategories = [
+            {
+                name: "Pessoas",
+                emoji: "👤",
+                words: [
+                    { word: "ANA" }, { word: "BRUNO" }, { word: "CAROLINA" }, { word: "DANIEL" }, { word: "EDUARDA" }, { word: "FERNANDO" }, { word: "GABRIELA" }, { word: "HEITOR" }, { word: "ISABELA" }, { word: "JOÃO" },
+                    { word: "KARLA" }, { word: "LUCAS" }, { word: "MARIANA" }, { word: "NATÁLIA" }, { word: "OTÁVIO" }, { word: "PEDRO" }, { word: "QUITÉRIA" }, { word: "RAFAELA" }, { word: "SAMUEL" }, { word: "TALITA" },
+                    { word: "ÚRSULA" }, { word: "VINÍCIUS" }, { word: "WELISON" }, { word: "XAVIER" }, { word: "YASMIN" }, { word: "ZELIA" }, { word: "NOEMI" }, { word: "NATANAEL" }, { word: "ANDREZA" }, { word: "IGOR" },
+                    { word: "CAROLINE" }, { word: "LUCIA" }, { word: "MARCOS" }, { word: "PAULA" }, { word: "RICARDO" }, { word: "SOFIA" }, { word: "THIAGO" }, { word: "VALERIA" }, { word: "WILLIAM" }, { word: "ALEXANDRE" },
+                    { word: "BEATRIZ" }, { word: "CLAUDIA" }, { word: "DEBORA" }, { word: "ELAINE" }, { word: "FABIO" }, { word: "GILBERTO" }, { word: "HELENA" }, { word: "IVAN" }, { word: "JULIANA" }, { word: "LEONARDO" },
+                    { word: "MATEUS" }, { word: "NIVEA" }, { word: "OSCAR" }, { word: "PATRICIA" }, { word: "QUEILA" }, { word: "RENATO" }, { word: "SILVANA" }, { word: "TERESA" }, { word: "UBIRATAN" }, { word: "VANESSA" },
+                    { word: "WASHINGTON" }, { word: "XENIA" }, { word: "YURI" }, { word: "ZULEIKA" }, { word: "ADRIANA" }, { word: "BERNARDO" }, { word: "CIBELE" }, { word: "DIEGO" }, { word: "FABIANA" }, { word: "GUSTAVO" },
+                    { word: "HERBERT" }, { word: "INGRID" }, { word: "JORGE" }, { word: "LAURA" }, { word: "MONICA" }, { word: "NELSON" }, { word: "OLAVO" }, { word: "PRISCILA" }, { word: "RAUL" }, { word: "SANDRA" },
+                    { word: "TATIANA" }, { word: "UBALDO" }, { word: "VITORIA" }, { word: "WALMIR" }, { word: "XUXA", }, { word: "YARA" }, { word: "ZECA" }, { word: "ALINE" }, { word: "BRENDA" }, { word: "CAIO" },
+                    { word: "DENIS" }, { word: "ELISA" }, { word: "FELIPE" }, { word: "GERALDO" }, { word: "HUMBERTO" }, { word: "IRACEMA" }, { word: "JULIO" }, { word: "LARISSA" }, { word: "MAURICIO" }, { word: "NADIA" },
+                    { word: "OCTAVIO" }, { word: "PRISCILA" }, { word: "REGIANE" }, { word: "SERGIO" }, { word: "TATIANE" }, { word: "VALDIR" }, { word: "WAGNER" }, { word: "XIMENA" }, { word: "YONE" }, { word: "ZEZÉ" },
+                    { word: "ANGELICA" }, { word: "BENEDITO" }, { word: "CINTIA" }, { word: "DAVI" }, { word: "ERIKA" }, { word: "FABRICIO" }, { word: "GLEICE" }, { word: "HORACIO" }, { word: "IARA" }, { word: "JULIANO" },
+                ]
+            },
+            {
+                name: "Cidades",
+                emoji: "🏙️",
+                words: [
+                    { word: "BRASÍLIA" }, { word: "SÃO PAULO" }, { word: "RIO DE JANEIRO" }, { word: "SALVADOR" }, { word: "BELO HORIZONTE" }, { word: "FORTALEZA" }, { word: "RECIFE" }, { word: "CURITIBA" },
+                    { word: "PORTO ALEGRE" }, { word: "MANAUS" }, { word: "FLORIANÓPOLIS" }, { word: "CUIABÁ" }, { word: "GOIÂNIA" }, { word: "NATAL" }, { word: "MACEIÓ" }, { word: "JOÃO PESSOA" },
+                    { word: "ARACAJU" }, { word: "VITÓRIA" }, { word: "TERESINA" }, { word: "PALMAS" }, { word: "CAMPO GRANDE" }, { word: "BOA VISTA" }, { word: "MACAPÁ" }, { word: "PORTO VELHO" }, { word: "RIO BRANCO" },
+                ]
+            },
+            {
+                name: "Países",
+                emoji: "🌎",
+                words: [
+                    { word: "BRASIL", flag: "🇧🇷" }, { word: "ARGENTINA", flag: "🇦🇷" }, { word: "CHILE", flag: "🇨🇱" }, { word: "PORTUGAL", flag: "🇵🇹" }, { word: "ESPANHA", flag: "🇪🇸" }, { word: "FRANÇA", flag: "🇫🇷" }, { word: "ALEMANHA", flag: "🇩🇪" }, { word: "ITÁLIA", flag: "🇮🇹" }, { word: "JAPÃO", flag: "🇯🇵" }, { word: "CHINA", flag: "🇨🇳" },
+                    { word: "ÍNDIA", flag: "🇮🇳" }, { word: "CANADÁ", flag: "🇨🇦" }, { word: "MÉXICO", flag: "🇲🇽" }, { word: "ESTADOS UNIDOS", flag: "🇺🇸" }, { word: "AUSTRÁLIA", flag: "🇦🇺" }, { word: "ÁFRICA DO SUL", flag: "🇿🇦" }, { word: "EGITO", flag: "🇪🇬" }, { word: "GRÉCIA", flag: "🇬🇷" }, { word: "TURQUIA", flag: "🇹🇷" },
+                    { word: "RÚSSIA", flag: "🇷🇺" }, { word: "SUÉCIA", flag: "🇸🇪" }, { word: "NORUEGA", flag: "🇳🇴" }, { word: "DINAMARCA", flag: "🇩🇰" }, { word: "FINLÂNDIA", flag: "🇫🇮" }, { word: "REINO UNIDO", flag: "🇬🇧" }
+                ]
+            },
+            {
+                name: "Objetos",
+                emoji: "💡",
+                words: [
+                    { word: "LIVRO", imageUrl: "https://placehold.co/80x80/8B4513/FFFFFF?text=LIVRO" },
+                    { word: "MESA", imageUrl: "https://placehold.co/80x80/A0522D/FFFFFF?text=MESA" },
+                    { word: "CADEIRA", imageUrl: "https://placehold.co/80x80/D2B48C/000000?text=CADEIRA" },
+                    { word: "LÁPIS", imageUrl: "https://placehold.co/80x80/FFD700/000000?text=LÁPIS" },
+                    { word: "TESOURA", imageUrl: "https://placehold.co/80x80/C0C0C0/000000?text=TESOURA" },
+                    { word: "BOLA", imageUrl: "https://placehold.co/80x80/FF6347/FFFFFF?text=BOLA" },
+                    { word: "CARRO", imageUrl: "https://placehold.co/80x80/808080/FFFFFF?text=CARRO" },
+                    { word: "TELEFONE", imageUrl: "https://placehold.co/80x80/A0A0A0/FFFFFF?text=FONE" },
+                    { word: "CHAVE", imageUrl: "https://placehold.co/80x80/E0BBE4/000000?text=CHAVE" },
+                    { word: "COPO", imageUrl: "https://placehold.co/80x80/B0E0E6/000000?text=COPO" },
+                    { word: "PRATO", imageUrl: "https://placehold.co/80x80/FFFFFF/000000?text=PRATO" },
+                    { word: "ESPELHO", imageUrl: "https://placehold.co/80x80/B0C4DE/000000?text=ESPELHO" },
+                    { word: "SAPATO", imageUrl: "https://placehold.co/80x80/696969/FFFFFF?text=SAPATO" },
+                    { word: "RELOGIO", imageUrl: "https://placehold.co/80x80/4682B4/FFFFFF?text=RELÓGIO" },
+                    { word: "CAMA", imageUrl: "https://placehold.co/80x80/F5DEB3/000000?text=CAMA" },
+                    { word: "CADEADO", imageUrl: "https://placehold.co/80x80/CD853F/FFFFFF?text=CADEADO" },
+                    { word: "MOEDA", imageUrl: "https://placehold.co/80x80/FFD700/000000?text=MOEDA" },
+                    { word: "PENTE", imageUrl: "https://placehold.co/80x80/D2B48C/000000?text=PENTE" },
+                    { word: "ESCOVA", imageUrl: "https://placehold.co/80x80/92A8D1/FFFFFF?text=ESCOVA" },
+                    { word: "CONTROLE", imageUrl: "https://placehold.co/80x80/555555/FFFFFF?text=CONTROLE" }
+                ]
+            },
+            {
+                name: "Palavras Compostas",
+                emoji: "🔗",
+                words: [
+                    { word: "GIRASSOL", displayWord: "GIRA-SOL" },
+                    { word: "GUARDACHUVA", displayWord: "GUARDA-CHUVA" },
+                    { word: "COUVEFLOR", displayWord: "COUVE-FLOR" },
+                    { word: "BEMTEVI", displayWord: "BEM-TE-VI" },
+                    { word: "CAVALOMARINHO", displayWord: "CAVALO MARINHO" },
+                    { word: "BEIJAFLOR", displayWord: "BEIJA-FLOR" },
+                    { word: "PARABRISA", displayWord: "PARA-BRISA" },
+                    { word: "PASSATEMPO", displayWord: "PASSA-TEMPO" },
+                    { word: "QUEBRACABECA", displayWord: "QUEBRA-CABEÇA" },
+                    { word: "ABRELATAS", displayWord: "ABRE-LATAS" }
+                ]
+            }
+        ];
+
+        // Paleta de cores vibrantes para as letras
+        const letterColors = [
+            '#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9', '#92A8D1', '#955251', '#B5EAD7', '#C7CEEA',
+            '#F2B5D4', '#E0BBE4', '#957DAD', '#D291BC', '#FFC3A0', '#FFAF7A', '#FF9A8B', '#FF7F6F',
+            '#76D7C4', '#48C9B0', '#1ABC9C', '#17A589', '#F4D03F', '#F5B041', '#EB984E', '#DC7633',
+            '#5DADE2', '#3498DB', '#2874A6', '#21618C', '#A569BD', '#8E44AD', '#7D3C98', '#6C3483'
+        ];
+        let colorIndex = 0; // Para iterar sobre as cores
+
+        // Funções de arrastar e soltar
+        let draggedLetter = null;
+
+        function dragStart(event, letter) {
+            draggedLetter = letter;
+            event.dataTransfer.setData('text/plain', letter);
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function allowDrop(event) {
+            event.preventDefault(); // Necessário para permitir a soltura
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData('text/plain');
+            if (data) {
+                // Remove o texto placeholder inicial se presente
+                if (currentWordDisplay.querySelector('span.text-gray-500')) {
+                    currentWordDisplay.innerHTML = '';
+                }
+                addLetterToCurrentWordDisplay(data);
+            }
+        }
+
+        // Adiciona uma letra ao display da palavra atual (usado por clique e arrastar/soltar)
+        function addLetterToCurrentWordDisplay(letter) {
+            const letterSpan = document.createElement('span');
+            // Reutiliza a cor da letra original
+            const originalButton = Array.from(alphabetGrid.children).find(btn => btn.textContent === letter);
+            const bgColor = originalButton ? originalButton.style.backgroundColor : '#ADD8E6'; // Cor padrão se não encontrar
+            
+            letterSpan.className = 'inline-flex items-center justify-center p-4 text-5xl font-bold text-gray-800 rounded-xl shadow-md cursor-pointer transition-all duration-100 hover:scale-105';
+            letterSpan.style.backgroundColor = bgColor;
+            letterSpan.textContent = letter;
+            // Permite remover letras clicando nelas no display
+            letterSpan.onclick = () => removeLetterFromCurrentWord(letterSpan); 
+            currentWordDisplay.appendChild(letterSpan);
+            currentFormedLetters.push(letter); // Adiciona a letra ao array interno
+            speak(letter);
+        }
+
+        // Remove uma letra específica do display da palavra atual
+        function removeLetterFromCurrentWord(letterSpan) {
+            const letterToRemove = letterSpan.textContent;
+            const index = currentFormedLetters.indexOf(letterToRemove);
+            if (index > -1) {
+                currentFormedLetters.splice(index, 1); // Remove do array interno
+                letterSpan.remove(); // Remove do DOM
+                speak(`Letra ${letterToRemove} removida.`);
+                if (currentFormedLetters.length === 0) {
+                     currentWordDisplay.innerHTML = '<span class="text-gray-500 text-3xl">Arraste as letras para cá!</span>';
+                }
+            }
+        }
+
+        // Gera os botões das letras do alfabeto
+        alphabet.forEach(letter => {
+            const button = document.createElement('button');
+            button.className = 'letter-btn';
+            button.textContent = letter;
+            button.draggable = true; // Torna o botão arrastável
+            button.ondragstart = (e) => dragStart(e, letter); // Chama a função dragStart ao iniciar o arrasto
+            
+            // Atribui uma cor da paleta para cada letra
+            button.style.backgroundColor = letterColors[colorIndex % letterColors.length];
+            colorIndex++;
+
+            button.onclick = () => {
+                // Adiciona a classe para feedback visual temporário
+                button.classList.add('clicked');
+                setTimeout(() => {
+                    button.classList.remove('clicked');
+                }, 200); // Remove a classe após 200ms para uma animação rápida
+
+                addLetterToCurrentWordDisplay(letter); // Adiciona a letra ao display da palavra atual
+            };
+            alphabetGrid.appendChild(button);
+        });
+
+        function clearCurrentWord() {
+            currentFormedLetters = []; // Limpa o array interno
+            currentWordDisplay.innerHTML = '<span class="text-gray-500 text-3xl">Arraste as letras para cá!</span>'; // Reseta o display
+            createWordFeedback.textContent = '';
+            createWordFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+            speak('Palavra apagada!');
+        }
+
+        function pronounceCurrentWord() {
+            const word = currentFormedLetters.join(''); // Usa o array interno
+            if (word && currentWordDisplay.querySelector('span.text-gray-500') === null) { // Ajusta a verificação do placeholder
+                speak(word);
+            } else {
+                speak('Nenhuma palavra para pronunciar.');
+            }
+        }
+
+        // Função para carregar a próxima palavra baseada na categoria
+        function nextTargetWord(forceNext = false) {
+            if (forceNext) {
+                // Avança para a próxima categoria
+                gameState.createWords.currentCategoryIndex = (gameState.createWords.currentCategoryIndex + 1) % wordCategories.length;
+            }
+
+            const currentCategory = wordCategories[gameState.createWords.currentCategoryIndex];
+            const categoryName = currentCategory.name;
+            const categoryEmoji = currentCategory.emoji;
+            const categoryWords = currentCategory.words;
+
+            // Seleciona uma palavra aleatória da lista da categoria atual
+            const randomWordIndex = Math.floor(Math.random() * categoryWords.length);
+            currentChosenWord = categoryWords[randomWordIndex]; // Armazena a palavra escolhida (objeto {word, flag} ou {word, imageUrl} ou {word, displayWord})
+
+            // Limpa o conteúdo anterior de targetWordDisplay
+            targetWordDisplay.innerHTML = 'Tente formar: '; // Reseta o texto inicial
+
+            // Cria e anexa o span para o texto da palavra
+            const wordTextSpan = document.createElement('span');
+            // Usa displayWord se existir, caso contrário, usa word
+            wordTextSpan.textContent = currentChosenWord.displayWord || currentChosenWord.word;
+            wordTextSpan.className = 'font-bold text-blue-600 ml-2';
+            targetWordDisplay.appendChild(wordTextSpan);
+
+            // Adiciona a bandeira ou a imagem se existir
+            if (currentCategory.name === "Países" && currentChosenWord.flag) {
+                const flagSpan = document.createElement('span');
+                flagSpan.textContent = ` ${currentChosenWord.flag}`;
+                flagSpan.className = 'ml-2 text-4xl'; // Ajuste o tamanho da bandeira conforme necessário
+                targetWordDisplay.appendChild(flagSpan);
+            } else if (currentCategory.name === "Objetos" && currentChosenWord.imageUrl) {
+                const objectImage = document.createElement('img');
+                objectImage.src = currentChosenWord.imageUrl;
+                objectImage.alt = `Imagem de ${currentChosenWord.word}`;
+                objectImage.className = 'ml-2 w-16 h-16 object-contain rounded-md shadow-sm'; // Estilos para a imagem
+                objectImage.onerror = function() { this.style.display='none'; console.error('Falha ao carregar imagem para: ' + currentChosenWord.word); };
+                targetWordDisplay.appendChild(objectImage);
+            }
+
+            // Atualiza o título da seção para refletir a categoria atual
+            createWordsTitle.innerHTML = `Construa Sua Palavra: ${categoryName} ${categoryEmoji}`;
+
+            clearCurrentWord(); // Limpa a palavra formada para nova tentativa
+            createWordFeedback.textContent = '';
+            createWordFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+            speak(`Tente formar a palavra: ${currentChosenWord.displayWord || currentChosenWord.word}`);
+        }
+
+        function checkFormedWord() {
+            // A palavra formada pelo usuário (sem hífens ou espaços por padrão do arrastar/soltar letras)
+            const formedWord = currentFormedLetters.join('').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            // A palavra alvo para comparação (sem hífens ou espaços)
+            const target = currentChosenWord.word.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+            if (formedWord === '') {
+                createWordFeedback.textContent = 'Forme uma palavra primeiro.';
+                createWordFeedback.className = 'text-center text-2xl mt-4 font-bold text-orange-700';
+                speak('Forme uma palavra primeiro.');
+                return; // Sai sem alterar as estatísticas
+            }
+
+            if (formedWord === target) {
+                createWordFeedback.textContent = 'Parabéns, Noemi! 🎉';
+                createWordFeedback.className = 'text-center text-2xl mt-4 font-bold text-green-700 animate-pulse';
+                speak('Parabéns, Noemi!');
+                updateGameStats(true, gameState.createWords);
+                setTimeout(() => {
+                    createWordFeedback.classList.remove('animate-pulse');
+                    nextTargetWord(); // Carrega a próxima palavra após o sucesso
+                }, 1500);
+            } else {
+                createWordFeedback.textContent = `Errado, Noemi! Tente novamente.`;
+                createWordFeedback.className = 'text-center text-2xl mt-4 font-bold text-red-700 animate-shake';
+                speak('Errado, Noemi! Tente novamente.');
+                updateGameStats(false, gameState.createWords);
+                setTimeout(() => {
+                    clearCurrentWord(); // Limpa a palavra formada para nova tentativa
+                    createWordFeedback.classList.remove('animate-shake');
+                }, 1500);
+            }
+        }
+
+        /* --- Lógica da Seção 'Montar Sílabas' --- */
+        const syllableAssemblyTargetWordText = document.getElementById('syllable-assembly-word-text');
+        const currentSyllableAssemblyDisplay = document.getElementById('current-syllable-assembly-display');
+        const syllablePiecesGrid = document.getElementById('syllable-pieces-grid');
+        const syllableAssemblyFeedback = document.getElementById('syllable-assembly-feedback');
+        let currentSyllableAssemblyWord = {}; // Stores the current word and its syllables
+        let currentAssembledSyllables = []; // Array to track assembled syllables
+
+        const assemblyWords = [
+            { word: "ABACAXI", syllables: ["A", "BA", "CA", "XI"] },
+            { word: "BICICLETA", syllables: ["BI", "CI", "CLE", "TA"] },
+            { word: "CACHORRO", syllables: ["CA", "CHO", "RRO"] },
+            { word: "DINHEIRO", syllables: ["DI", "NHEI", "RO"] },
+            { word: "ELEFANTE", syllables: ["E", "LE", "FAN", "TE"] },
+            { word: "FOGUETE", syllables: ["FO", "GUE", "TE"] },
+            { word: "GIRAFA", syllables: ["GI", "RA", "FA"] },
+            { word: "HIPOPÓTAMO", syllables: ["HI", "PO", "PÓ", "TA", "MO"] },
+            { word: "IGREJA", syllables: ["I", "GRE", "JA"] },
+            { word: "JACARÉ", syllables: ["JA", "CA", "RÉ"] },
+            { word: "LARANJA", syllables: ["LA", "RAN", "JA"] },
+            { word: "MORANGO", syllables: ["MO", "RAN", "GO"] },
+            { word: "NAVIO", syllables: ["NA", "VIO"] },
+            { word: "ÔNIBUS", syllables: ["Ô", "NI", "BUS"] },
+            { word: "PATO", syllables: ["PA", "TO"] },
+            { word: "QUEIJO", syllables: ["QUEI", "JO"] },
+            { word: "SAPO", syllables: ["SA", "PO"] },
+            { word: "TIGRE", syllables: ["TI", "GRE"] },
+            { word: "UVA", syllables: ["U", "VA"] },
+            { word: "VIOLÃO", syllables: ["VI", "O", "LÃO"] },
+            { word: "XÍCARA", syllables: ["XÍ", "CA", "RA"] },
+            { word: "ZEBRA", syllables: ["ZE", "BRA"] }
+        ];
+
+        gameState.syllableAssembly.wordList = assemblyWords; // Link word list to game state
+
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateNewSyllableAssemblyProblem(forceNew = false) {
+            if (assemblyWords.length === 0) {
+                syllableAssemblyTargetWordText.textContent = "Nenhuma palavra disponível para montar.";
+                currentSyllableAssemblyDisplay.innerHTML = '<span class="text-gray-500 text-3xl">Nenhuma sílaba para arrastar!</span>';
+                syllablePiecesGrid.innerHTML = '';
+                syllableAssemblyFeedback.textContent = '';
+                return;
+            }
+
+            if (forceNew) {
+                gameState.syllableAssembly.currentIndex = (gameState.syllableAssembly.currentIndex + 1) % assemblyWords.length;
+            }
+
+            currentSyllableAssemblyWord = assemblyWords[gameState.syllableAssembly.currentIndex];
+            syllableAssemblyTargetWordText.textContent = currentSyllableAssemblyWord.word;
+
+            // Clear assembled syllables and grid
+            clearSyllableAssembly();
+            syllablePiecesGrid.innerHTML = '';
+            syllableAssemblyFeedback.textContent = '';
+            syllableAssemblyFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+
+
+            const shuffledSyllables = shuffleArray([...currentSyllableAssemblyWord.syllables]);
+
+            shuffledSyllables.forEach(syllable => {
+                const button = document.createElement('button');
+                button.className = 'syllable-btn'; // Reusing syllable-btn class
+                button.textContent = syllable;
+                button.draggable = true;
+                button.ondragstart = (e) => dragStartSyllable(e, syllable);
+                
+                // Assign a color from the palette, similar to letters
+                button.style.backgroundColor = letterColors[colorIndex % letterColors.length];
+                colorIndex++;
+
+                button.onclick = () => {
+                    button.classList.add('clicked');
+                    setTimeout(() => {
+                        button.classList.remove('clicked');
+                    }, 200);
+                    addSyllableToAssemblyDisplay(syllable);
+                };
+                syllablePiecesGrid.appendChild(button);
+            });
+
+            speak(`Monte a palavra: ${currentSyllableAssemblyWord.word}`);
+        }
+
+        // Drag & Drop functions for syllables
+        let draggedSyllable = null;
+
+        function dragStartSyllable(event, syllable) {
+            draggedSyllable = syllable;
+            event.dataTransfer.setData('text/plain', syllable);
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function allowDropSyllable(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function dropSyllable(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData('text/plain');
+            if (data) {
+                if (currentSyllableAssemblyDisplay.querySelector('span.text-gray-500')) {
+                    currentSyllableAssemblyDisplay.innerHTML = '';
+                }
+                addSyllableToAssemblyDisplay(data);
+            }
+        }
+
+        function addSyllableToAssemblyDisplay(syllable) {
+            const syllableSpan = document.createElement('span');
+            // Reutiliza a cor da sílaba original (do botão que foi arrastado)
+            // Note: This attempts to get the color from the *original* button in syllablePiecesGrid.
+            // If the original button was removed (e.g., if we made it "disappear" after dragging),
+            // this might need adjustment. For now, we assume the buttons stay in place.
+            const originalButton = Array.from(syllablePiecesGrid.children).find(btn => btn.textContent === syllable);
+            const bgColor = originalButton ? originalButton.style.backgroundColor : '#D8BFD8'; // Cor padrão se não encontrar
+            
+            syllableSpan.className = 'inline-flex items-center justify-center p-4 text-5xl font-bold text-gray-800 rounded-xl shadow-md cursor-pointer transition-all duration-100 hover:scale-105';
+            syllableSpan.style.backgroundColor = bgColor;
+            syllableSpan.textContent = syllable;
+            syllableSpan.onclick = () => removeSyllableFromAssembly(syllableSpan);
+            currentSyllableAssemblyDisplay.appendChild(syllableSpan);
+            currentAssembledSyllables.push(syllable);
+            speak(syllable);
+        }
+
+        function removeSyllableFromAssembly(syllableSpan) {
+            const syllableToRemove = syllableSpan.textContent;
+            const index = currentAssembledSyllables.indexOf(syllableToRemove);
+            if (index > -1) {
+                currentAssembledSyllables.splice(index, 1);
+                syllableSpan.remove();
+                speak(`Sílaba ${syllableToRemove} removida.`);
+                if (currentAssembledSyllables.length === 0) {
+                     currentSyllableAssemblyDisplay.innerHTML = '<span class="text-gray-500 text-3xl">Arraste as sílabas para cá!</span>';
+                }
+            }
+        }
+
+        function clearSyllableAssembly() {
+            currentAssembledSyllables = [];
+            currentSyllableAssemblyDisplay.innerHTML = '<span class="text-gray-500 text-3xl">Arraste as sílabas para cá!</span>';
+            syllableAssemblyFeedback.textContent = '';
+            syllableAssemblyFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+            speak('Montagem limpa!');
+        }
+
+        function pronounceAssembledSyllables() {
+            const word = currentAssembledSyllables.join('');
+            if (word && currentSyllableAssemblyDisplay.querySelector('span.text-gray-500') === null) {
+                speak(word);
+            } else {
+                speak('Nenhuma sílaba para pronunciar.');
+            }
+        }
+
+        function checkSyllableAssembly() {
+            const assembledWord = currentAssembledSyllables.join('').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            const targetWord = currentSyllableAssemblyWord.word.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+            if (assembledWord === '') {
+                syllableAssemblyFeedback.textContent = 'Monte a palavra primeiro.';
+                syllableAssemblyFeedback.className = 'text-center text-2xl mt-4 font-bold text-orange-700';
+                speak('Monte a palavra primeiro.');
+                return;
+            }
+
+            if (assembledWord === targetWord) {
+                syllableAssemblyFeedback.textContent = 'Parabéns, Noemi! Você montou corretamente! 🎉';
+                syllableAssemblyFeedback.className = 'text-center text-2xl mt-4 font-bold text-green-700 animate-pulse';
+                speak('Parabéns, Noemi! Você montou corretamente!');
+                updateGameStats(true, gameState.syllableAssembly);
+                setTimeout(() => {
+                    syllableAssemblyFeedback.classList.remove('animate-pulse');
+                    generateNewSyllableAssemblyProblem();
+                }, 1500);
+            } else {
+                syllableAssemblyFeedback.textContent = `Errado, Noemi! Tente novamente.`;
+                syllableAssemblyFeedback.className = 'text-center text-2xl mt-4 font-bold text-red-700 animate-shake';
+                speak('Errado, Noemi! Tente novamente.');
+                updateGameStats(false, gameState.syllableAssembly);
+                setTimeout(() => {
+                    clearSyllableAssembly(); // Clear for a new attempt
+                    syllableAssemblyFeedback.classList.remove('animate-shake');
+                }, 1500);
+            }
+        }
+
+
+        /* --- Lógica da Seção 'Fazer Contas' (Matemática) --- */
+        const mathProblemDisplay = document.getElementById('math-problem-display');
+        const mathAnswerInput = document.getElementById('math-answer');
+        const mathFeedback = document.getElementById('math-feedback');
+        let currentMathProblem = {}; // Stores the current problem and correct answer
+
+        function generateNewMathProblem(forceNew = false) {
+            if (forceNew) {
+                gameState.mathGame.consecutiveCorrect = 0;
+                gameState.mathGame.consecutiveIncorrect = 0;
+            }
+            
+            const operations = ['+', '-', '*', '/'];
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            let num1, num2, correctAnswer;
+
+            // Generate easy problems
+            switch (operation) {
+                case '+':
+                    num1 = Math.floor(Math.random() * 11); // 0-10
+                    num2 = Math.floor(Math.random() * (11 - num1)); // Sum up to 10
+                    if (num1 + num2 > 15) { // Ensure sum is not too high
+                        num2 = Math.floor(Math.random() * (16 - num1));
+                    }
+                    correctAnswer = num1 + num2;
+                    break;
+                case '-':
+                    num1 = Math.floor(Math.random() * 11) + 5; // 5-15
+                    num2 = Math.floor(Math.random() * (num1 + 1)); // num2 <= num1 for non-negative result
+                    correctAnswer = num1 - num2;
+                    break;
+                case '*':
+                    num1 = Math.floor(Math.random() * 6); // 0-5
+                    num2 = Math.floor(Math.random() * 6); // 0-5
+                    correctAnswer = num1 * num2;
+                    break;
+                case '/':
+                    let divisors = [1, 2, 3, 4, 5];
+                    num2 = divisors[Math.floor(Math.random() * divisors.length)]; // Divisor 1-5
+                    let multiples = Array.from({length: 6}, (_, i) => i * num2).filter(m => m <= 20 && m > 0); // Multiples up to 20
+                    if (multiples.length === 0) { // Fallback if no suitable multiples found
+                        num2 = 1;
+                        multiples = Array.from({length: 6}, (_, i) => i * num2).filter(m => m <= 20 && m > 0);
+                    }
+                    num1 = multiples[Math.floor(Math.random() * multiples.length)];
+                    correctAnswer = num1 / num2;
+                    break;
+            }
+
+            const problemText = `${num1} ${operation} ${num2} = ?`;
+            mathProblemDisplay.textContent = problemText;
+            currentMathProblem = { num1, num2, operation, correctAnswer };
+            mathAnswerInput.value = ''; // Clear previous input
+            mathFeedback.textContent = '';
+            mathFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+            speak(`Qual é a resposta para ${problemText.replace('?', '')}?`);
+        }
+
+        function checkMathAnswer() {
+            const userAnswer = parseInt(mathAnswerInput.value);
+            if (isNaN(userAnswer)) {
+                mathFeedback.textContent = 'Por favor, digite um número.';
+                mathFeedback.className = 'text-center text-2xl mt-4 font-bold text-orange-700';
+                speak('Por favor, digite um número.');
+                return;
+            }
+
+            if (userAnswer === currentMathProblem.correctAnswer) {
+                mathFeedback.textContent = 'Parabéns, Noemi! 🎉';
+                mathFeedback.className = 'text-center text-2xl mt-4 font-bold text-green-700 animate-pulse';
+                speak('Parabéns, Noemi!');
+                updateGameStats(true, gameState.mathGame);
+                setTimeout(() => {
+                    mathFeedback.classList.remove('animate-pulse');
+                    generateNewMathProblem();
+                }, 1500);
+            } else {
+                mathFeedback.textContent = `Errado, Noemi! Tente novamente.`;
+                mathFeedback.className = 'text-center text-2xl mt-4 font-bold text-red-700 animate-shake';
+                speak('Errado, Noemi! Tente novamente.');
+                updateGameStats(false, gameState.mathGame);
+                setTimeout(() => {
+                    mathAnswerInput.value = ''; // Clear input for another try
+                    mathFeedback.classList.remove('animate-shake');
+                }, 1500);
+            }
+        }
+
+        function clearMathAnswer() {
+            mathAnswerInput.value = '';
+            mathFeedback.textContent = '';
+            mathFeedback.classList.remove('animate-pulse', 'animate-shake', 'text-green-700', 'text-red-700', 'text-orange-700');
+            speak('Resposta limpa!');
+        }
+
+
+        /* --- Lógica de Navegação entre Seções --- */
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.game-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+                section.classList.add('opacity-0');
+            });
+
+            const activeSection = document.getElementById(sectionId);
+            if (activeSection) {
+                setTimeout(() => {
+                    activeSection.classList.add('active');
+                    activeSection.classList.remove('opacity-0');
+                }, 100);
+            }
+
+            // Reset/Initialize section specific state when changing sections
+            gameState.currentSectionId = sectionId;
+
+            // Initialize content for each section when it becomes active
+            if (sectionId === 'create-words') {
+                // Ao entrar na seção, redefinir o índice da categoria para 0 e carregar a primeira palavra da primeira categoria
+                gameState.createWords.currentCategoryIndex = 0; 
+                gameState.createWords.consecutiveCorrect = 0;
+                gameState.createWords.consecutiveIncorrect = 0;
+                nextTargetWord(); // Carrega a primeira palavra da nova categoria
+                clearCurrentWord(); // Garante que o input esteja limpo ao mudar de seção
+            } else if (sectionId === 'syllable-assembly') { // Nova seção de montagem de sílabas
+                gameState.syllableAssembly.currentIndex = 0;
+                gameState.syllableAssembly.consecutiveCorrect = 0;
+                gameState.syllableAssembly.consecutiveIncorrect = 0;
+                generateNewSyllableAssemblyProblem();
+            } else if (sectionId === 'math-game') { // Nova seção de matemática
+                generateNewMathProblem();
+                mathAnswerInput.focus(); // Coloca o foco no campo de resposta
+            }
+            updateScoreAndLevelDisplay(); // Update score/level when switching sections
+        }
+
+        // Exibe a seção "Criar Palavras" por padrão ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('create-words');
+            updateScoreAndLevelDisplay(); // Initial score and level display
+        });
+
+    </script>
+</body>
+</html>
